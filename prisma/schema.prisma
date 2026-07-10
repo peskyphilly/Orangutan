@@ -1,0 +1,35 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Supplier {
+  id           String   @id
+  name         String
+  category     String // VENUE | CATERER | PRODUCTION | PHOTOGRAPHER | FLORIST
+  price        Int? // fixed price, null for caterers
+  perHead      Int? // caterers only
+  capacity     Int? // venues only
+  kitchen      Boolean? // venues
+  rigging      Boolean? // venues
+  stepFree     Boolean? // venues
+  halal        Boolean? // caterers
+  needsKitchen Boolean? // caterers
+  needsRigging Boolean? // production
+  staging      Boolean? // production
+  recPct       Int // delivered-as-agreed %
+  recEvents    Int // count of client-confirmed events
+}
+
+model Composition {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  brief     String // the submitted brief, JSON-serialised (SQLite has no Json type)
+  teams     String // the solved teams, JSON-serialised
+  reference String? // set on confirmation, e.g. EV-48213
+  status    String   @default("composed") // composed | confirmed
+}

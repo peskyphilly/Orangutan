@@ -1,0 +1,22 @@
+# dependencies
+/node_modules
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# prisma / sqlite
+/prisma/dev.db
+/prisma/dev.db-journal
+*.db
+
+# misc
+.DS_Store
+*.tsbuildinfo
+next-env.d.ts
+
+# debug
+npm-debug.log*
