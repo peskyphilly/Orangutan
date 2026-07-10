@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  font-family: var(--font-figtree), system-ui, sans-serif;
+  font-weight: 300;
+}
+
+@layer base {
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-inter-tight), system-ui, sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+  }
+
+  /* Visible, consistent focus ring across dark and light sections. */
+  :focus-visible {
+    outline: 2px solid #b18f55;
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+}
+
+@layer utilities {
+  /* The single permitted gradient: a soft radial gold glow behind dark heroes. */
+  .gold-glow {
+    background-image: radial-gradient(
+      60% 55% at 50% 0%,
+      rgba(177, 143, 85, 0.16) 0%,
+      rgba(177, 143, 85, 0.05) 38%,
+      rgba(13, 14, 13, 0) 72%
+    );
+  }
+
+  .hairline-dark {
+    border-color: rgba(248, 247, 244, 0.1);
+  }
+
+  .hairline-light {
+    border-color: #e6e3db;
+  }
+}
+
+/* Staggered fade-up on load; honour reduced motion everywhere. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
