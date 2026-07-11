@@ -30,6 +30,25 @@ npx prisma db seed       # loads the 34-supplier dataset
 npm run dev              # http://localhost:3000
 ```
 
+## Deploy a hosted version (Vercel + Postgres)
+
+Local dev uses SQLite. A hosted deploy needs a persistent database, so production
+runs on PostgreSQL via `prisma/schema.production.prisma` — the app code is
+identical; only the Vercel build (`npm run build:vercel`) targets Postgres, and it
+pushes the schema and seeds the 34 suppliers automatically on each deploy.
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fpeskyphilly%2FOrangutan%2Ftree%2Fclaude%2Fnew-session-vgoh0m&env=DATABASE_URL&envDescription=PostgreSQL%20connection%20string%20(e.g.%20a%20free%20database%20from%20neon.tech)&project-name=eventos&repository-name=eventos)
+
+Steps:
+
+1. Create a free Postgres database at [neon.tech](https://neon.tech) and copy its
+   connection string (the direct, non-pooled one, ending in `?sslmode=require`).
+2. Click **Deploy with Vercel** above (or import the repo at
+   [vercel.com/new](https://vercel.com/new) and select this branch).
+3. When prompted, set the `DATABASE_URL` environment variable to your Neon string.
+4. Deploy. The build creates the schema, seeds the suppliers, and builds the app —
+   Vercel hands you an `https://…vercel.app` URL that opens in any browser.
+
 ## Testing
 
 ```bash

@@ -1,0 +1,41 @@
+// Production schema — identical models to schema.prisma, but on PostgreSQL for a
+// hosted deploy (Vercel serverless can't persist a SQLite file). Local dev and
+// the test suite keep using the SQLite schema.prisma; only the Vercel build
+// (`npm run build:vercel`) points Prisma at this file. The generated client is
+// the same either way, so no application code changes between the two.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Supplier {
+  id           String   @id
+  name         String
+  category     String
+  price        Int?
+  perHead      Int?
+  capacity     Int?
+  kitchen      Boolean?
+  rigging      Boolean?
+  stepFree     Boolean?
+  halal        Boolean?
+  needsKitchen Boolean?
+  needsRigging Boolean?
+  staging      Boolean?
+  recPct       Int
+  recEvents    Int
+}
+
+model Composition {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  brief     String
+  teams     String
+  reference String?
+  status    String   @default("composed")
+}
