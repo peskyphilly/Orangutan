@@ -71,9 +71,9 @@ export default async function LandingPage() {
   const supplierCount = await prisma.supplier.count();
 
   const stats = [
-    { value: String(supplierCount), label: "suppliers in the composition set" },
-    { value: "<2s", label: "median composition" },
-    { value: "100%", label: "client-confirmed records" },
+    { value: String(supplierCount), label: "suppliers ready to match" },
+    { value: "<2s", label: "to build a full team" },
+    { value: "100%", label: "records confirmed by clients" },
   ];
 
   return (
@@ -88,7 +88,7 @@ export default async function LandingPage() {
 
         <section className="mx-auto max-w-6xl px-6 pb-24 pt-16 md:pt-24">
           <div className="grid items-center gap-14 lg:grid-cols-[1.05fr_0.95fr]">
-            {/* Left — copy */}
+            {/* Left: copy */}
             <div>
               <p className="animate-fade-up font-mono text-[11px] uppercase tracking-[0.2em] text-gold">
                 For galas, weddings, conferences and launches
@@ -104,9 +104,9 @@ export default async function LandingPage() {
                 className="mt-7 max-w-xl animate-fade-up text-lg font-light leading-relaxed text-dim"
                 style={{ animationDelay: "160ms" }}
               >
-                One brief in, complete supplier teams out — every vendor free on
-                your date, every cost within budget, every detail already handled.
-                You review finished teams, not vendor lists.
+                Tell us what you&apos;re planning, when it&apos;s happening and
+                what you want to spend, and we&apos;ll find complete supplier
+                teams that fit. All you have to do is choose one.
               </p>
 
               <div
@@ -125,7 +125,7 @@ export default async function LandingPage() {
               </div>
             </div>
 
-            {/* Right — live team preview */}
+            {/* Right: live team preview */}
             <div
               className="animate-fade-up"
               style={{ animationDelay: "320ms" }}
@@ -156,13 +156,13 @@ export default async function LandingPage() {
               How it works
             </p>
             <h2 className="mt-4 text-2xl tracking-tight">
-              The engine composes teams that fit together
+              Only teams that actually fit together
             </h2>
             <p className="mt-4 font-light leading-relaxed text-dim">
               A caterer that needs a kitchen is never paired with a venue that
               lacks one. Production that needs rigging is never sent somewhere it
-              cannot rig. Capacity, access and dietary requirements are settled
-              before a single team reaches you.
+              cannot rig. Guest count, access and dietary needs are checked
+              before you see a single team.
             </p>
           </div>
           <div>
@@ -170,14 +170,15 @@ export default async function LandingPage() {
               The records
             </p>
             <h2 className="mt-4 text-2xl tracking-tight">
-              Delivery records, never self-reported
+              Real delivery records, not star ratings
             </h2>
             <p className="mt-4 font-light leading-relaxed text-dim">
-              Every supplier carries a record of the form{" "}
+              Every supplier shows a record like{" "}
               <span className="font-mono text-sm text-dim">
                 97% delivered as agreed · 41 verified events
-              </span>{" "}
-              — confirmed by clients after the event. No star ratings anywhere.
+              </span>
+              . Past clients confirm it after the event. No self-reported scores.
+              No star ratings.
             </p>
           </div>
         </div>
