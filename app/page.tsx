@@ -1,7 +1,71 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
+import { gbp } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
+
+// A real composed team (the Recommended result for the demo brief), shown as the
+// hero visual so the landing page demonstrates the product rather than describing it.
+const PREVIEW = {
+  tag: "Recommended",
+  total: 41840,
+  under: 160,
+  rows: [
+    { role: "Venue", name: "The Brewery", price: 14000 },
+    { role: "Catering", name: "Zafferano", price: 12240 },
+    { role: "Production", name: "Anna Valley", price: 8000 },
+    { role: "Photography", name: "Rankin Creative", price: 4500 },
+    { role: "Flowers", name: "Larry Walshe", price: 3100 },
+  ],
+};
+
+function TeamPreview() {
+  return (
+    <div className="relative">
+      {/* stacked cards behind, implying more than one solved team */}
+      <div
+        aria-hidden
+        className="absolute inset-0 translate-x-4 translate-y-4 rounded-sm border border-dark-line bg-panel/60"
+      />
+      <div
+        aria-hidden
+        className="absolute inset-0 translate-x-2 translate-y-2 rounded-sm border border-dark-line bg-panel/80"
+      />
+      <div className="relative rounded-sm border border-dark-line bg-panel p-6">
+        <div className="flex items-center justify-between">
+          <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-gold">
+            {PREVIEW.tag}
+          </span>
+          <span className="font-mono text-[11px] text-dim">
+            {gbp(PREVIEW.under)} under budget
+          </span>
+        </div>
+
+        <p className="mt-4 font-mono text-3xl text-white">{gbp(PREVIEW.total)}</p>
+
+        <ul className="mt-5 divide-y divide-[rgba(248,247,244,0.1)] border-y hairline-dark">
+          {PREVIEW.rows.map((r) => (
+            <li key={r.role} className="flex items-baseline justify-between py-2.5">
+              <span className="text-sm text-white">
+                <span className="text-dim">{r.role}</span>
+                <span className="mx-2 text-[rgba(248,247,244,0.25)]">·</span>
+                {r.name}
+              </span>
+              <span className="font-mono text-sm text-white">{gbp(r.price)}</span>
+            </li>
+          ))}
+        </ul>
+
+        <div className="mt-4 flex items-center gap-2.5">
+          <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-gold" />
+          <span className="text-xs font-light text-dim">
+            Every conflict resolved before you saw it
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default async function LandingPage() {
   const supplierCount = await prisma.supplier.count();
@@ -22,41 +86,52 @@ export default async function LandingPage() {
           </span>
         </header>
 
-        <section className="mx-auto max-w-6xl px-6 pb-28 pt-20 md:pt-28">
-          <p className="animate-fade-up font-mono text-[11px] uppercase tracking-[0.2em] text-gold">
-            Every conflict pre-resolved
-          </p>
-          <h1
-            className="mt-6 max-w-4xl animate-fade-up text-5xl leading-[1.02] tracking-tightest md:text-7xl"
-            style={{ animationDelay: "80ms" }}
-          >
-            Your event, solved.
-            <br />
-            <span className="text-gold-soft">Not searched.</span>
-          </h1>
-          <p
-            className="mt-8 max-w-xl animate-fade-up text-lg font-light leading-relaxed text-dim"
-            style={{ animationDelay: "160ms" }}
-          >
-            Submit one brief. The engine returns complete supplier teams — every
-            member free on your date, the total inside your budget, every
-            dependency between suppliers already resolved. You review teams, not
-            search results.
-          </p>
+        <section className="mx-auto max-w-6xl px-6 pb-24 pt-16 md:pt-24">
+          <div className="grid items-center gap-14 lg:grid-cols-[1.05fr_0.95fr]">
+            {/* Left — copy */}
+            <div>
+              <p className="animate-fade-up font-mono text-[11px] uppercase tracking-[0.2em] text-gold">
+                For galas, weddings, conferences and launches
+              </p>
+              <h1
+                className="mt-6 max-w-2xl animate-fade-up text-5xl leading-[1.04] tracking-tightest md:text-6xl"
+                style={{ animationDelay: "80ms" }}
+              >
+                Plan your whole event{" "}
+                <span className="text-gold-soft">in minutes.</span>
+              </h1>
+              <p
+                className="mt-7 max-w-xl animate-fade-up text-lg font-light leading-relaxed text-dim"
+                style={{ animationDelay: "160ms" }}
+              >
+                One brief in, complete supplier teams out — every vendor free on
+                your date, every cost within budget, every detail already handled.
+                You review finished teams, not vendor lists.
+              </p>
 
-          <div
-            className="mt-10 animate-fade-up"
-            style={{ animationDelay: "240ms" }}
-          >
-            <Link
-              href="/compose"
-              className="inline-flex items-center gap-3 border border-gold bg-gold px-7 py-3.5 font-medium text-black transition-transform hover:-translate-y-1 focus-visible:-translate-y-1"
+              <div
+                className="mt-9 animate-fade-up"
+                style={{ animationDelay: "240ms" }}
+              >
+                <Link
+                  href="/compose"
+                  className="inline-flex items-center gap-3 border border-gold bg-gold px-7 py-3.5 font-medium text-black transition-transform hover:-translate-y-1 focus-visible:-translate-y-1"
+                >
+                  Compose an event
+                  <span aria-hidden className="font-mono">
+                    →
+                  </span>
+                </Link>
+              </div>
+            </div>
+
+            {/* Right — live team preview */}
+            <div
+              className="animate-fade-up"
+              style={{ animationDelay: "320ms" }}
             >
-              Compose an event
-              <span aria-hidden className="font-mono">
-                →
-              </span>
-            </Link>
+              <TeamPreview />
+            </div>
           </div>
         </section>
       </div>
@@ -78,7 +153,7 @@ export default async function LandingPage() {
         <div className="mx-auto grid max-w-6xl gap-12 px-6 py-20 md:grid-cols-2">
           <div>
             <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-gold">
-              Composition, not search
+              How it works
             </p>
             <h2 className="mt-4 text-2xl tracking-tight">
               The engine composes teams that fit together
@@ -92,7 +167,7 @@ export default async function LandingPage() {
           </div>
           <div>
             <p className="font-mono text-[11px] uppercase tracking-[0.18em] text-gold">
-              Confirmed, not reviewed
+              The records
             </p>
             <h2 className="mt-4 text-2xl tracking-tight">
               Delivery records, never self-reported
@@ -111,7 +186,7 @@ export default async function LandingPage() {
       <footer className="border-t hairline-dark">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-8 text-sm text-grey">
           <span className="font-display tracking-tight">EventOS</span>
-          <span className="font-light">Composed, not searched.</span>
+          <span className="font-light">One brief. A complete event.</span>
         </div>
       </footer>
     </main>
