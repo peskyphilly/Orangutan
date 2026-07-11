@@ -51,7 +51,7 @@ export default async function ComposingPage({
           text: `${trace.composedTeams === 1 ? "team" : "teams"} composed.`,
         }
       : {
-          text: `No team survived — the ${
+          text: `No team survived. The ${
             STAGE_LABEL[trace.failedStage!] ?? "compatibility"
           } stage returned nothing.`,
         },

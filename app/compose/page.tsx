@@ -56,8 +56,8 @@ export default function ComposePage() {
           Describe the event once
         </h1>
         <p className="mt-4 max-w-xl animate-fade-up font-light leading-relaxed text-grey">
-          The engine handles the combinatorics. Give it the constraints and it
-          returns complete teams — not a list to sift through.
+          You set the basics. We return complete supplier teams that already fit
+          together. No vendor lists to sift through.
         </p>
 
         <form action={formAction} className="mt-12 space-y-10">
@@ -163,13 +163,31 @@ export default function ComposePage() {
               Non-negotiables
             </legend>
             <p className="mt-1 text-xs font-light text-grey">
-              Teams that cannot meet these are never composed.
+              Tick what you must have. Any team that cannot meet it is left out.
             </p>
             <div className="mt-4 space-y-3">
               {[
-                { name: "stepFree", label: "Step-free access" },
-                { name: "halal", label: "Halal-capable catering" },
-                { name: "staging", label: "Live staging & radio mics" },
+                { name: "stepFree", label: "Step-free access", checked: true },
+                {
+                  name: "halal",
+                  label: "Halal-capable catering",
+                  checked: true,
+                },
+                {
+                  name: "staging",
+                  label: "Live staging & radio mics",
+                  checked: true,
+                },
+                {
+                  name: "kitchen",
+                  label: "On-site kitchen",
+                  checked: false,
+                },
+                {
+                  name: "rigging",
+                  label: "Venue with rigging points",
+                  checked: false,
+                },
               ].map((item) => (
                 <label
                   key={item.name}
@@ -178,7 +196,7 @@ export default function ComposePage() {
                   <input
                     type="checkbox"
                     name={item.name}
-                    defaultChecked
+                    defaultChecked={item.checked}
                     className="h-4 w-4 accent-gold"
                   />
                   <span className="text-sm text-ink">{item.label}</span>

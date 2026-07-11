@@ -19,6 +19,8 @@ export async function composeAction(
   const stepFree = formData.get("stepFree") === "on";
   const halal = formData.get("halal") === "on";
   const staging = formData.get("staging") === "on";
+  const kitchen = formData.get("kitchen") === "on";
+  const rigging = formData.get("rigging") === "on";
 
   // Server-side validation: date + guests + budget ≥ £5,000.
   if (!occasion) return { error: "Choose an occasion." };
@@ -41,6 +43,8 @@ export async function composeAction(
     stepFree,
     halal,
     staging,
+    kitchen,
+    rigging,
   };
 
   const id = await createComposition(brief);

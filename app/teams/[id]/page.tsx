@@ -20,14 +20,14 @@ function resolvedTies(team: Team, brief: Brief): Tie[] {
     pair: "Venue ↔ Catering",
     detail: caterer.needsKitchen
       ? `${venue.name} has the on-site kitchen ${caterer.name} requires.`
-      : `${caterer.name} cooks off-site — no kitchen dependency to satisfy.`,
+      : `${caterer.name} cooks off-site, so no kitchen dependency to satisfy.`,
   });
 
   ties.push({
     pair: "Venue ↔ Production",
     detail: production.needsRigging
       ? `${venue.name} carries the rigging ${production.name} requires.`
-      : `${production.name} is free-standing — no rigging dependency to satisfy.`,
+      : `${production.name} is free-standing, so no rigging dependency to satisfy.`,
   });
 
   ties.push({
@@ -53,6 +53,18 @@ function resolvedTies(team: Team, brief: Brief): Tie[] {
     ties.push({
       pair: "Production",
       detail: `${production.name} provides live staging and radio mics.`,
+    });
+  }
+  if (brief.kitchen) {
+    ties.push({
+      pair: "Kitchen",
+      detail: `${venue.name} has an on-site kitchen, as required.`,
+    });
+  }
+  if (brief.rigging) {
+    ties.push({
+      pair: "Rigging",
+      detail: `${venue.name} has rigging points, as required.`,
     });
   }
 

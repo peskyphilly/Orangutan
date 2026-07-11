@@ -25,14 +25,14 @@ function emptyStateCopy(stage: FailedStage | null): {
       return {
         headline: "No venue fits these constraints",
         detail:
-          "The venue-fit stage returned zero — no venue meets both the guest count and the access requirement.",
+          "No venue meets both the guest count and the access requirement.",
         loosen: "Lower the guest count or relax step-free access.",
       };
     case "requirements":
       return {
         headline: "No supplier meets every requirement",
         detail:
-          "The requirements stage returned zero — a non-negotiable removed every candidate in a category.",
+          "A non-negotiable removed every candidate in at least one category.",
         loosen: "Relax one non-negotiable.",
       };
     case "compatibility":
@@ -136,8 +136,8 @@ export default async function TeamsPage({
         {teams.length > 0 ? (
           <>
             <p className="mt-4 max-w-xl animate-fade-up font-light text-grey">
-              Each team is internally consistent — every conflict was resolved
-              before this page. Prices are the full team total.
+              Every supplier in each team already fits together. Conflicts were
+              sorted before you got here. Prices are the full team total.
             </p>
             <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {teams.map((team) => (

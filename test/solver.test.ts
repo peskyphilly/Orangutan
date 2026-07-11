@@ -29,6 +29,8 @@ const baseBrief: Brief = {
   stepFree: false,
   halal: false,
   staging: false,
+  kitchen: false,
+  rigging: false,
 };
 
 // Minimal one-per-category building blocks.
@@ -180,6 +182,42 @@ describe("step-free filter", () => {
       production: {},
     });
     const { teams, trace } = solve(suppliers, { ...baseBrief, date, stepFree: true });
+    expect(teams).toHaveLength(0);
+    expect(trace.venuesFit).toBe(0);
+    expect(trace.failedStage).toBe("venueFit");
+  });
+});
+
+describe("kitchen filter", () => {
+  it("drops venues without an on-site kitchen when required", () => {
+    const { suppliers, date } = minimalSet({
+      venue: { kitchen: false },
+      caterer: {},
+      production: {},
+    });
+    const { teams, trace } = solve(suppliers, {
+      ...baseBrief,
+      date,
+      kitchen: true,
+    });
+    expect(teams).toHaveLength(0);
+    expect(trace.venuesFit).toBe(0);
+    expect(trace.failedStage).toBe("venueFit");
+  });
+});
+
+describe("rigging filter", () => {
+  it("drops venues without rigging when required", () => {
+    const { suppliers, date } = minimalSet({
+      venue: { rigging: false },
+      caterer: {},
+      production: {},
+    });
+    const { teams, trace } = solve(suppliers, {
+      ...baseBrief,
+      date,
+      rigging: true,
+    });
     expect(teams).toHaveLength(0);
     expect(trace.venuesFit).toBe(0);
     expect(trace.failedStage).toBe("venueFit");

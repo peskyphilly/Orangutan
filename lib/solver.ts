@@ -40,6 +40,8 @@ export interface Brief {
   stepFree: boolean;
   halal: boolean;
   staging: boolean;
+  kitchen: boolean;
+  rigging: boolean;
 }
 
 export type TeamTag = "Recommended" | "Best value" | "Balanced";
@@ -144,7 +146,10 @@ export function solve(suppliers: Supplier[], brief: Brief): SolveResult {
   // 2. Category requirement filters.
   const venues = availVenues.filter(
     (v) =>
-      (v.capacity ?? 0) >= brief.guests && (!brief.stepFree || v.stepFree === true)
+      (v.capacity ?? 0) >= brief.guests &&
+      (!brief.stepFree || v.stepFree === true) &&
+      (!brief.kitchen || v.kitchen === true) &&
+      (!brief.rigging || v.rigging === true)
   );
   const caterers = availCaterers.filter(
     (c) => !brief.halal || c.halal === true
@@ -330,4 +335,6 @@ export const DEMO_BRIEF: Brief = {
   stepFree: true,
   halal: true,
   staging: true,
+  kitchen: false,
+  rigging: false,
 };
