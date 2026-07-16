@@ -13,8 +13,72 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  role          String    @default("BUYER")
+  createdAt     DateTime  @default(now())
+
+  accounts     Account[]
+  sessions     Session[]
+  vendor       Vendor?
+  compositions Composition[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Vendor {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  name         String
+  contactEmail String?
+  phone        String?
+  city         String?
+  createdAt    DateTime @default(now())
+
+  user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listings Supplier[]
+}
+
 model Supplier {
-  id           String   @id
+  id           String   @id @default(cuid())
   name         String
   category     String
   price        Int?
@@ -29,6 +93,21 @@ model Supplier {
   staging      Boolean?
   recPct       Int
   recEvents    Int
+
+  status   String  @default("published")
+  vendorId String?
+  vendor   Vendor? @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  blackouts Blackout[]
+}
+
+model Blackout {
+  id         String   @id @default(cuid())
+  supplierId String
+  date       String
+  supplier   Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+
+  @@unique([supplierId, date])
 }
 
 model Composition {
@@ -38,4 +117,7 @@ model Composition {
   teams     String
   reference String?
   status    String   @default("composed")
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
 }
