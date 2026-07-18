@@ -76,6 +76,13 @@ export function explainListingFit(
       }
       if (listing.perHead == null || listing.perHead <= 0) {
         reasons.push("No price per head set.");
+      } else {
+        const cateringTotal = listing.perHead * brief.guests;
+        if (cateringTotal > brief.budget) {
+          reasons.push(
+            `At £${listing.perHead}/head × ${brief.guests} guests = £${cateringTotal.toLocaleString("en-GB")}, catering alone exceeds the default £${brief.budget.toLocaleString("en-GB")} budget.`
+          );
+        }
       }
       break;
     }
