@@ -180,6 +180,20 @@ export default async function VendorDashboard() {
                         ? `${l.recPct}% delivered as agreed · ${l.recEvents} verified events`
                         : "New, no record yet"}
                     </p>
+                    {isPublished &&
+                    l.category === "CATERER" &&
+                    l.halal !== true ? (
+                      <p className="mt-2 text-sm text-ink">
+                        Not marked Halal-capable. Buyers who require halal
+                        catering will not see this listing.{" "}
+                        <Link
+                          href={`/vendors/listings/${l.id}/edit`}
+                          className="underline underline-offset-4"
+                        >
+                          Edit capabilities
+                        </Link>
+                      </p>
+                    ) : null}
                   </div>
 
                   <div className="flex items-center gap-4 font-mono text-[11px] uppercase tracking-[0.14em]">

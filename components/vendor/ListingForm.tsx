@@ -151,21 +151,36 @@ export function ListingForm({
       {spec.flags.length > 0 ? (
         <fieldset>
           <legend className="text-sm font-medium text-ink">Capabilities</legend>
+          {category === "CATERER" ? (
+            <p className="mt-1 text-xs font-light text-grey">
+              Buyers who require halal catering will only see listings marked
+              Halal-capable. Leave it unticked only if you cannot serve halal.
+            </p>
+          ) : null}
           <div className="mt-4 space-y-3">
-            {spec.flags.map((f) => (
-              <label
-                key={f.name}
-                className="flex cursor-pointer items-center gap-3 border border-light-line px-4 py-3 transition-colors hover:border-gold-soft"
-              >
-                <input
-                  type="checkbox"
-                  name={f.name}
-                  defaultChecked={Boolean(FLAG_VALUE[f.name]?.(initial))}
-                  className="h-4 w-4 accent-gold"
-                />
-                <span className="text-sm text-ink">{f.label}</span>
-              </label>
-            ))}
+            {spec.flags.map((f) => {
+              const initialFlag = FLAG_VALUE[f.name]?.(initial);
+              const defaultHalalOn =
+                isNew && category === "CATERER" && f.name === "halal";
+              return (
+                <label
+                  key={f.name}
+                  className="flex cursor-pointer items-center gap-3 border border-light-line px-4 py-3 transition-colors hover:border-gold-soft"
+                >
+                  <input
+                    type="checkbox"
+                    name={f.name}
+                    defaultChecked={
+                      initialFlag == null
+                        ? defaultHalalOn
+                        : Boolean(initialFlag)
+                    }
+                    className="h-4 w-4 accent-gold"
+                  />
+                  <span className="text-sm text-ink">{f.label}</span>
+                </label>
+              );
+            })}
           </div>
         </fieldset>
       ) : null}
@@ -179,6 +194,9 @@ export function ListingForm({
         />
         <span className="text-sm text-ink">
           Publish: make this listing available to the composition engine
+          {category === "CATERER"
+            ? ". Match the capabilities buyers tick on their brief, or you will be filtered out."
+            : ""}
         </span>
       </label>
 

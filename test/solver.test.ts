@@ -313,6 +313,61 @@ describe("marketplace listings", () => {
     }
   });
 
+  it("surfaces marketplace catering even when photography already covers marketplace", () => {
+    const lexifyPhoto: Supplier = {
+      id: "ph-lexify",
+      name: "Photography",
+      category: "PHOTOGRAPHER",
+      price: 2000,
+      recPct: 0,
+      recEvents: 0,
+      vendorId: "vendor-lexify",
+      vendorName: "Lexify Scale",
+    };
+    const lexifyCatering: Supplier = {
+      id: "c-lexify",
+      name: "Catering",
+      category: "CATERER",
+      perHead: 70,
+      halal: true,
+      needsKitchen: false,
+      recPct: 0,
+      recEvents: 0,
+      vendorId: "vendor-lexify",
+      vendorName: "Lexify Scale",
+    };
+    const brief: Brief = {
+      ...DEMO_BRIEF,
+      guests: 76,
+      budget: 80000,
+    };
+    // Force fallback competition: pricey marketplace venue so preferred pools fail.
+    const priceyVenue: Supplier = {
+      id: "v-pricey",
+      name: "Pricey Hall",
+      category: "VENUE",
+      price: 75000,
+      capacity: 200,
+      kitchen: true,
+      rigging: true,
+      stepFree: true,
+      recPct: 0,
+      recEvents: 0,
+      vendorId: "vendor-pricey",
+      vendorName: "Pricey Co",
+    };
+    const { teams } = solve(
+      [...SUPPLIERS, lexifyPhoto, lexifyCatering, priceyVenue],
+      brief,
+      () => true
+    );
+
+    expect(teams.some((t) => t.members.photographer.id === "ph-lexify")).toBe(
+      true
+    );
+    expect(teams.some((t) => t.members.caterer.id === "c-lexify")).toBe(true);
+  });
+
   it("falls back to seeded suppliers if marketplace-only pools cannot fit the budget", () => {
     const lexify: Supplier = {
       id: "ph-lexify",

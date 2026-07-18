@@ -137,11 +137,37 @@ function memberScore(s: Supplier): number {
   return s.recPct + Math.min(s.recEvents, 60) / 12;
 }
 
+type MemberRole =
+  | "venue"
+  | "caterer"
+  | "production"
+  | "photographer"
+  | "florist";
+
+const MEMBER_ROLES: MemberRole[] = [
+  "venue",
+  "caterer",
+  "production",
+  "photographer",
+  "florist",
+];
+
 function teamHasMarketplace(t: Team): boolean {
-  const m = t.members;
-  return [m.venue, m.caterer, m.production, m.photographer, m.florist].some(
-    (s) => Boolean(s.vendorId)
-  );
+  return MEMBER_ROLES.some((role) => Boolean(t.members[role].vendorId));
+}
+
+function marketplaceRolesInPool(teams: Team[]): Set<MemberRole> {
+  const roles = new Set<MemberRole>();
+  for (const t of teams) {
+    for (const role of MEMBER_ROLES) {
+      if (t.members[role].vendorId) roles.add(role);
+    }
+  }
+  return roles;
+}
+
+function teamCoversMarketplaceRole(t: Team, role: MemberRole): boolean {
+  return Boolean(t.members[role].vendorId);
 }
 
 /** Seeded rows are demo filler. When a real vendor listing fits, use only those. */
@@ -355,9 +381,9 @@ function row(role: TeamRow["role"], s: Supplier, price: number): TeamRow {
 
 // 5. Selection — up to 3 teams that differ in at least venue or caterer where
 // possible: highest quality (Recommended), lowest total (Best value), best
-// quality/total ratio (Balanced). When marketplace listings exist in the pool
-// but none made the cut, replace Balanced with the best-value marketplace team
-// so new vendors are not permanently buried by seeded competitors.
+// quality/total ratio (Balanced). Then ensure each role that has a real
+// marketplace listing in the pool appears on at least one returned team, so a
+// cheap photographer cannot "satisfy" marketplace coverage for catering.
 function select(teams: Team[]): Team[] {
   if (teams.length === 0) return [];
 
@@ -393,7 +419,10 @@ function select(teams: Team[]): Team[] {
   add(byTotal, "Best value");
   add(byRatio, "Balanced");
 
-  if (chosen.length > 0 && !chosen.some(teamHasMarketplace)) {
+  if (chosen.length === 0) return chosen;
+
+  // Team-level rescue first (any marketplace member).
+  if (!chosen.some(teamHasMarketplace)) {
     const marketplace = [...teams]
       .filter(teamHasMarketplace)
       .sort((a, b) => a.total - b.total || b.quality - a.quality);
@@ -402,10 +431,50 @@ function select(teams: Team[]): Team[] {
       marketplace.find(notYetChosen) ??
       marketplace[0];
     if (cand) {
-      cand = { ...cand, tag: "Balanced" };
+      cand = { ...cand, tag: chosen[2]?.tag ?? "Balanced" };
       if (chosen.length >= 3) chosen[2] = cand;
       else chosen.push(cand);
     }
+  }
+
+  // Role-level rescue: photography coverage must not hide a missing caterer.
+  const rolesWithMarketplace = marketplaceRolesInPool(teams);
+  for (const role of rolesWithMarketplace) {
+    if (chosen.some((t) => teamCoversMarketplaceRole(t, role))) continue;
+
+    const candidates = [...teams]
+      .filter((t) => teamCoversMarketplaceRole(t, role))
+      .sort((a, b) => a.total - b.total || b.quality - a.quality);
+    const cand =
+      candidates.find((t) => notYetChosen(t) && distinct(t)) ??
+      candidates.find(notYetChosen) ??
+      candidates[0];
+    if (!cand) continue;
+
+    // Replace the chosen team whose removal loses the fewest other marketplace roles.
+    let replaceAt = chosen.length - 1;
+    let bestLoss = Number.POSITIVE_INFINITY;
+    for (let i = 0; i < chosen.length; i++) {
+      const current = chosen[i]!;
+      if (teamCoversMarketplaceRole(current, role)) continue;
+      let loss = 0;
+      for (const other of rolesWithMarketplace) {
+        if (other === role) continue;
+        const onlyHere =
+          teamCoversMarketplaceRole(current, other) &&
+          !chosen.some(
+            (t, j) => j !== i && teamCoversMarketplaceRole(t, other)
+          );
+        if (onlyHere) loss++;
+      }
+      if (loss < bestLoss) {
+        bestLoss = loss;
+        replaceAt = i;
+      }
+    }
+
+    const tag = chosen[replaceAt]?.tag ?? "Balanced";
+    chosen[replaceAt] = { ...cand, tag };
   }
 
   return chosen;
