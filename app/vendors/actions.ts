@@ -8,11 +8,13 @@ import {
   addBlackout,
   createListing,
   deleteListing,
+  getListing,
   removeBlackout,
   setEnquiryStatus,
   setListingStatus,
   updateListing,
 } from "@/lib/vendors";
+import { CATEGORY_FIELDS } from "@/lib/listing-fields";
 import { getVendorSessionId } from "@/lib/vendor-session";
 import { destroySession, registerVendor, signIn } from "@/lib/auth";
 
@@ -84,13 +86,27 @@ function parseListing(formData: FormData): ListingInput | { error: string } {
   };
   const flag = (key: string) => formData.get(key) === "on";
   const publish = formData.get("publish") === "on";
+  const price = num("price");
+  const perHead = num("perHead");
+  const capacity = num("capacity");
+
+  if (category === "CATERER") {
+    if (perHead == null || perHead <= 0) {
+      return { error: "Set a price per head greater than £0." };
+    }
+  } else if (price == null || price <= 0) {
+    return { error: "Set a price greater than £0." };
+  }
+  if (category === "VENUE" && (capacity == null || capacity < 10)) {
+    return { error: "Set a capacity of at least 10 guests." };
+  }
 
   return {
     name,
     category,
-    price: num("price"),
-    perHead: num("perHead"),
-    capacity: num("capacity"),
+    price,
+    perHead,
+    capacity,
     kitchen: flag("kitchen"),
     rigging: flag("rigging"),
     stepFree: flag("stepFree"),
@@ -111,7 +127,7 @@ export async function createListingAction(
   formData: FormData
 ): Promise<ListingState> {
   const vendorId = await getVendorSessionId();
-  if (!vendorId) redirect("/vendors/join");
+  if (!vendorId) redirect("/vendors/signin");
 
   const parsed = parseListing(formData);
   if ("error" in parsed) return { error: parsed.error };
@@ -125,7 +141,7 @@ export async function updateListingAction(
   formData: FormData
 ): Promise<ListingState> {
   const vendorId = await getVendorSessionId();
-  if (!vendorId) redirect("/vendors/join");
+  if (!vendorId) redirect("/vendors/signin");
 
   const id = String(formData.get("id") ?? "");
   if (!id) return { error: "Missing listing." };
@@ -139,10 +155,27 @@ export async function updateListingAction(
 
 export async function toggleListingStatusAction(formData: FormData): Promise<void> {
   const vendorId = await getVendorSessionId();
-  if (!vendorId) redirect("/vendors/join");
+  if (!vendorId) redirect("/vendors/signin");
   const id = String(formData.get("id") ?? "");
   const next = String(formData.get("next") ?? "published");
-  if (id) await setListingStatus(id, vendorId, next);
+  if (!id) return;
+
+  if (next === "published") {
+    const listing = await getListing(id, vendorId);
+    if (!listing) return;
+    const pricing = CATEGORY_FIELDS[listing.category].pricing;
+    const priced =
+      pricing === "perHead"
+        ? (listing.perHead ?? 0) > 0
+        : (listing.price ?? 0) > 0;
+    if (!priced) {
+      // Keep as draft until the vendor sets a price on the edit form.
+      revalidatePath("/vendors/dashboard");
+      redirect(`/vendors/listings/${id}/edit?needPrice=1`);
+    }
+  }
+
+  await setListingStatus(id, vendorId, next);
   revalidatePath("/vendors/dashboard");
 }
 
@@ -187,12 +220,19 @@ export async function addBlackoutAction(
   return {};
 }
 
-export async function removeBlackoutAction(formData: FormData): Promise<void> {
+export async function removeBlackoutAction(
+  _prev: BlackoutState,
+  formData: FormData
+): Promise<BlackoutState> {
   const vendorId = await getVendorSessionId();
-  if (!vendorId) redirect("/vendors/join");
+  if (!vendorId) redirect("/vendors/signin");
 
   const id = String(formData.get("id") ?? "");
   const supplierId = String(formData.get("supplierId") ?? "");
-  if (id) await removeBlackout(id, vendorId);
+  if (!id) return { error: "Missing blocked date." };
+
+  const result = await removeBlackout(id, vendorId);
   if (supplierId) revalidatePath(`/vendors/listings/${supplierId}/edit`);
+  if (result.error) return { error: result.error };
+  return {};
 }

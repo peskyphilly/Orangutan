@@ -155,9 +155,14 @@ export async function confirmComposition(
         );
       }
 
-      // Unique (supplierId, date) is the lock. A concurrent confirm fails here.
+      // Unique (supplierId, date) is the lock. reason=booking means vendors
+      // cannot clear these from their unavailable-dates UI.
       await tx.blackout.createMany({
-        data: supplierIds.map((supplierId) => ({ supplierId, date })),
+        data: supplierIds.map((supplierId) => ({
+          supplierId,
+          date,
+          reason: "booking",
+        })),
       });
 
       let reference = makeReference();

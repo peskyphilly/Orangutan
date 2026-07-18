@@ -21,15 +21,33 @@ function AddButton() {
   );
 }
 
+function RemoveButton() {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="text-sm font-light text-grey underline-offset-4 hover:text-ink hover:underline disabled:opacity-60"
+    >
+      {pending ? "Removing" : "Remove"}
+    </button>
+  );
+}
+
 export function BlackoutManager({
   supplierId,
   blackouts,
 }: {
   supplierId: string;
-  blackouts: { id: string; date: string }[];
+  blackouts: { id: string; date: string; reason: string }[];
 }) {
-  const [state, formAction] = useFormState(addBlackoutAction, {} as BlackoutState);
+  const [addState, addAction] = useFormState(addBlackoutAction, {} as BlackoutState);
+  const [removeState, removeAction] = useFormState(
+    removeBlackoutAction,
+    {} as BlackoutState
+  );
   const minDate = new Date().toISOString().slice(0, 10);
+  const error = addState.error || removeState.error;
 
   return (
     <div className="mt-14 border-t hairline-light pt-10">
@@ -37,12 +55,11 @@ export function BlackoutManager({
         Unavailable dates
       </h2>
       <p className="mt-3 max-w-xl text-sm font-light leading-relaxed text-grey">
-        Block dates you cannot take. The engine will not place this listing in
-        any team for those days. Confirmed bookings also block the date
-        automatically.
+        Block dates you cannot take. Confirmed bookings also lock the date
+        automatically, and those cannot be cleared here.
       </p>
 
-      <form action={formAction} className="mt-6 flex flex-wrap items-end gap-3">
+      <form action={addAction} className="mt-6 flex flex-wrap items-end gap-3">
         <input type="hidden" name="supplierId" value={supplierId} />
         <div className="min-w-[12rem] flex-1">
           <label htmlFor="blackout-date" className="block text-sm font-medium text-ink">
@@ -60,32 +77,41 @@ export function BlackoutManager({
         <AddButton />
       </form>
 
-      {state.error ? (
+      {error ? (
         <p role="alert" className="mt-3 border-l-2 border-gold pl-3 text-sm text-ink">
-          {state.error}
+          {error}
         </p>
       ) : null}
 
       {blackouts.length > 0 ? (
         <ul className="mt-6 divide-y divide-[#E6E3DB] border-y hairline-light">
-          {blackouts.map((b) => (
-            <li
-              key={b.id}
-              className="flex items-center justify-between gap-4 py-3"
-            >
-              <span className="font-mono text-sm text-ink">{prettyDate(b.date)}</span>
-              <form action={removeBlackoutAction}>
-                <input type="hidden" name="id" value={b.id} />
-                <input type="hidden" name="supplierId" value={supplierId} />
-                <button
-                  type="submit"
-                  className="text-sm font-light text-grey underline-offset-4 hover:text-ink hover:underline"
-                >
-                  Remove
-                </button>
-              </form>
-            </li>
-          ))}
+          {blackouts.map((b) => {
+            const locked = b.reason === "booking";
+            return (
+              <li
+                key={b.id}
+                className="flex items-center justify-between gap-4 py-3"
+              >
+                <div>
+                  <span className="font-mono text-sm text-ink">
+                    {prettyDate(b.date)}
+                  </span>
+                  <span className="ml-3 font-mono text-[10px] uppercase tracking-[0.14em] text-grey">
+                    {locked ? "Confirmed booking" : "You blocked"}
+                  </span>
+                </div>
+                {locked ? (
+                  <span className="text-sm font-light text-grey">Locked</span>
+                ) : (
+                  <form action={removeAction}>
+                    <input type="hidden" name="id" value={b.id} />
+                    <input type="hidden" name="supplierId" value={supplierId} />
+                    <RemoveButton />
+                  </form>
+                )}
+              </li>
+            );
+          })}
         </ul>
       ) : (
         <p className="mt-6 text-sm font-light text-grey">

@@ -10,8 +10,10 @@ export const dynamic = "force-dynamic";
 
 export default async function EditListingPage({
   params,
+  searchParams,
 }: {
   params: { id: string };
+  searchParams?: { needPrice?: string };
 }) {
   const vendorId = await getVendorSessionId();
   if (!vendorId) redirect("/vendors/signin");
@@ -19,6 +21,7 @@ export default async function EditListingPage({
   const listing = await getListing(params.id, vendorId);
   if (!listing) notFound();
   const blackouts = await listBlackouts(listing.id, vendorId);
+  const needPrice = searchParams?.needPrice === "1";
 
   return (
     <main className="min-h-screen bg-white text-ink">
@@ -37,9 +40,18 @@ export default async function EditListingPage({
         </p>
         <h1 className="mt-4 text-4xl tracking-tight md:text-5xl">{listing.name}</h1>
 
+        {needPrice ? (
+          <p
+            role="alert"
+            className="mt-6 border-l-2 border-gold pl-3 text-sm text-ink"
+          >
+            Set a price before publishing this listing.
+          </p>
+        ) : null}
+
         <ListingForm
           action={updateListingAction}
-          submitLabel="Save changes"
+          submitLabel="Save price and details"
           initial={{
             id: listing.id,
             name: listing.name,

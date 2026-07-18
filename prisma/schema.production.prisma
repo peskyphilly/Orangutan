@@ -94,6 +94,7 @@ model Blackout {
   id         String   @id @default(cuid())
   supplierId String
   date       String
+  reason     String   @default("vendor") // vendor | booking
   supplier   Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
 
   @@unique([supplierId, date])

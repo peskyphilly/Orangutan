@@ -187,7 +187,7 @@ export default async function VendorDashboard() {
                       href={`/vendors/listings/${l.id}/edit`}
                       className="text-grey underline-offset-4 hover:text-ink hover:underline"
                     >
-                      Edit
+                      Edit price
                     </Link>
                     <form action={toggleListingStatusAction}>
                       <input type="hidden" name="id" value={l.id} />

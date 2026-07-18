@@ -89,12 +89,14 @@ model Supplier {
   blackouts Blackout[]
 }
 
-// A date a listing is not available (replaces the pseudo-availability hash once
-// vendors start managing their own calendars).
+// A date a listing is not available.
+// reason = "vendor"  → set by the supplier (editable/removable)
+// reason = "booking" → set when a buyer confirms a team (locked; vendors cannot clear)
 model Blackout {
   id         String   @id @default(cuid())
   supplierId String
   date       String // YYYY-MM-DD
+  reason     String   @default("vendor") // vendor | booking
   supplier   Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
 
   @@unique([supplierId, date])

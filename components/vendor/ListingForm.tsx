@@ -116,27 +116,36 @@ export function ListingForm({
       </div>
 
       {spec.numbers.length > 0 ? (
-        <div className="grid gap-6 sm:grid-cols-2">
-          {spec.numbers.map((n) => (
-            <div key={n.name}>
-              <label
-                htmlFor={n.name}
-                className="block text-sm font-medium text-ink"
-              >
-                {n.label}
-              </label>
-              <input
-                id={n.name}
-                name={n.name}
-                type="number"
-                min={0}
-                required
-                defaultValue={NUMBER_VALUE[n.name]?.(initial) ?? ""}
-                className="mt-3 w-full border border-light-line bg-white px-4 py-3 font-mono text-ink focus:border-gold"
-              />
-            </div>
-          ))}
-        </div>
+        <fieldset>
+          <legend className="text-sm font-medium text-ink">Your pricing</legend>
+          <p className="mt-1 text-xs font-light text-grey">
+            This is what buyers see in composed teams. You can change it any
+            time before a booking locks the date.
+          </p>
+          <div className="mt-4 grid gap-6 sm:grid-cols-2">
+            {spec.numbers.map((n) => (
+              <div key={n.name}>
+                <label
+                  htmlFor={n.name}
+                  className="block text-sm font-medium text-ink"
+                >
+                  {n.label}
+                </label>
+                <input
+                  id={n.name}
+                  name={n.name}
+                  type="number"
+                  min={1}
+                  step={1}
+                  required
+                  defaultValue={NUMBER_VALUE[n.name]?.(initial) ?? ""}
+                  placeholder={n.name === "perHead" ? "e.g. 68" : "e.g. 14000"}
+                  className="mt-3 w-full border border-light-line bg-white px-4 py-3 font-mono text-ink focus:border-gold"
+                />
+              </div>
+            ))}
+          </div>
+        </fieldset>
       ) : null}
 
       {spec.flags.length > 0 ? (

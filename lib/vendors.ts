@@ -130,6 +130,7 @@ export async function setListingStatus(
 export interface BlackoutRecord {
   id: string;
   date: string;
+  reason: string; // vendor | booking
 }
 
 export async function listBlackouts(
@@ -145,7 +146,7 @@ export async function listBlackouts(
   return prisma.blackout.findMany({
     where: { supplierId },
     orderBy: { date: "asc" },
-    select: { id: true, date: true },
+    select: { id: true, date: true, reason: true },
   });
 }
 
@@ -166,7 +167,9 @@ export async function addBlackout(
   if (new Date(date) < today) return { error: "Blackout dates must be today or later." };
 
   try {
-    await prisma.blackout.create({ data: { supplierId, date } });
+    await prisma.blackout.create({
+      data: { supplierId, date, reason: "vendor" },
+    });
   } catch {
     return { error: "That date is already blocked." };
   }
@@ -176,13 +179,21 @@ export async function addBlackout(
 export async function removeBlackout(
   blackoutId: string,
   vendorId: string
-): Promise<void> {
+): Promise<{ error?: string }> {
   const row = await prisma.blackout.findUnique({
     where: { id: blackoutId },
     include: { supplier: { select: { vendorId: true } } },
   });
-  if (!row || row.supplier.vendorId !== vendorId) return;
+  if (!row || row.supplier.vendorId !== vendorId) {
+    return { error: "Blocked date not found." };
+  }
+  if (row.reason === "booking") {
+    return {
+      error: "This date is locked by a confirmed booking and cannot be cleared.",
+    };
+  }
   await prisma.blackout.delete({ where: { id: blackoutId } });
+  return {};
 }
 
 // Keep only the fields relevant to the listing's category; null the rest so a
