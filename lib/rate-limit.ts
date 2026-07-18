@@ -32,38 +32,44 @@ export function clientIp(): string {
 /**
  * Fixed-window rate limit backed by Postgres/SQLite so counters are shared
  * across Vercel serverless instances. Returns an error message when blocked.
+ * Fails open if the limiter store is unavailable so auth/compose stay up.
  */
 export async function enforceRateLimit(
   bucket: RateLimitBucket,
   key: string
 ): Promise<string | null> {
-  const { limit, windowMs } = RATE_LIMITS[bucket];
-  const fullKey = `${bucket}:${key}`;
-  const now = new Date();
+  try {
+    const { limit, windowMs } = RATE_LIMITS[bucket];
+    const fullKey = `${bucket}:${key}`;
+    const now = new Date();
 
-  const existing = await prisma.rateLimit.findUnique({ where: { key: fullKey } });
+    const existing = await prisma.rateLimit.findUnique({ where: { key: fullKey } });
 
-  if (!existing || existing.resetAt.getTime() <= now.getTime()) {
-    await prisma.rateLimit.upsert({
+    if (!existing || existing.resetAt.getTime() <= now.getTime()) {
+      await prisma.rateLimit.upsert({
+        where: { key: fullKey },
+        create: {
+          key: fullKey,
+          count: 1,
+          resetAt: new Date(now.getTime() + windowMs),
+        },
+        update: {
+          count: 1,
+          resetAt: new Date(now.getTime() + windowMs),
+        },
+      });
+      return null;
+    }
+
+    if (existing.count >= limit) return ERROR;
+
+    await prisma.rateLimit.update({
       where: { key: fullKey },
-      create: {
-        key: fullKey,
-        count: 1,
-        resetAt: new Date(now.getTime() + windowMs),
-      },
-      update: {
-        count: 1,
-        resetAt: new Date(now.getTime() + windowMs),
-      },
+      data: { count: { increment: 1 } },
     });
     return null;
+  } catch (err) {
+    console.error("rate limit unavailable", err);
+    return null;
   }
-
-  if (existing.count >= limit) return ERROR;
-
-  await prisma.rateLimit.update({
-    where: { key: fullKey },
-    data: { count: { increment: 1 } },
-  });
-  return null;
 }
