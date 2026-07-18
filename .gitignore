@@ -20,3 +20,5 @@ next-env.d.ts
 
 # debug
 npm-debug.log*
+.vercel
+.env*
