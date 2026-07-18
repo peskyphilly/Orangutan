@@ -5,9 +5,11 @@ import { revalidatePath } from "next/cache";
 import {
   ListingCategory,
   ListingInput,
+  addBlackout,
   createListing,
   deleteListing,
   joinVendor,
+  removeBlackout,
   setEnquiryStatus,
   setListingStatus,
   updateListing,
@@ -146,4 +148,36 @@ export async function respondEnquiryAction(formData: FormData): Promise<void> {
     await setEnquiryStatus(id, vendorId, status);
   }
   revalidatePath("/vendors/dashboard");
+}
+
+export interface BlackoutState {
+  error?: string;
+}
+
+export async function addBlackoutAction(
+  _prev: BlackoutState,
+  formData: FormData
+): Promise<BlackoutState> {
+  const vendorId = getVendorSessionId();
+  if (!vendorId) redirect("/vendors/join");
+
+  const supplierId = String(formData.get("supplierId") ?? "");
+  const date = String(formData.get("date") ?? "");
+  if (!supplierId) return { error: "Missing listing." };
+
+  const result = await addBlackout(supplierId, vendorId, date);
+  if (result.error) return { error: result.error };
+
+  revalidatePath(`/vendors/listings/${supplierId}/edit`);
+  return {};
+}
+
+export async function removeBlackoutAction(formData: FormData): Promise<void> {
+  const vendorId = getVendorSessionId();
+  if (!vendorId) redirect("/vendors/join");
+
+  const id = String(formData.get("id") ?? "");
+  const supplierId = String(formData.get("supplierId") ?? "");
+  if (id) await removeBlackout(id, vendorId);
+  if (supplierId) revalidatePath(`/vendors/listings/${supplierId}/edit`);
 }

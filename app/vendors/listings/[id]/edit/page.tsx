@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getVendorSessionId } from "@/lib/vendor-session";
-import { getListing } from "@/lib/vendors";
+import { getListing, listBlackouts } from "@/lib/vendors";
 import { ListingForm } from "@/components/vendor/ListingForm";
+import { BlackoutManager } from "@/components/vendor/BlackoutManager";
 import { updateListingAction } from "../../../actions";
 
 export const dynamic = "force-dynamic";
@@ -17,6 +18,7 @@ export default async function EditListingPage({
 
   const listing = await getListing(params.id, vendorId);
   if (!listing) notFound();
+  const blackouts = await listBlackouts(listing.id, vendorId);
 
   return (
     <main className="min-h-screen bg-white text-ink">
@@ -55,6 +57,8 @@ export default async function EditListingPage({
             status: listing.status,
           }}
         />
+
+        <BlackoutManager supplierId={listing.id} blackouts={blackouts} />
       </section>
     </main>
   );

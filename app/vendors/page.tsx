@@ -11,7 +11,7 @@ export default async function VendorLanding() {
   const points = [
     {
       title: "Composed into teams, not buried in a list",
-      body: "You are not one of fifty search results. The engine places your listing into complete teams when it fits the brief — venue, catering, production and more, matched around you.",
+      body: "You are not one of fifty search results. The engine places your listing into complete teams when it fits the brief: venue, catering, production and more, matched around you.",
     },
     {
       title: "Only briefs you actually fit",
@@ -19,7 +19,7 @@ export default async function VendorLanding() {
     },
     {
       title: "Records earned, never bought",
-      body: "Your standing comes from delivery confirmed by past clients after the event — not stars, not self-reported scores. New listings start clean and build from there.",
+      body: "Your standing comes from delivery confirmed by past clients after the event. Not stars, not self-reported scores. New listings start clean and build from there.",
     },
   ];
 
@@ -60,7 +60,7 @@ export default async function VendorLanding() {
             style={{ animationDelay: "160ms" }}
           >
             List once. When a client&apos;s brief matches what you offer, the
-            engine composes you into a complete supplier team — already checked
+            engine composes you into a complete supplier team, already checked
             for fit. You receive enquiries you can deliver, not cold leads to
             chase.
           </p>

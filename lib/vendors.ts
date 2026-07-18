@@ -170,6 +170,64 @@ export async function setListingStatus(
   return prisma.supplier.updateMany({ where: { id, vendorId }, data: { status } });
 }
 
+export interface BlackoutRecord {
+  id: string;
+  date: string;
+}
+
+export async function listBlackouts(
+  supplierId: string,
+  vendorId: string
+): Promise<BlackoutRecord[]> {
+  const listing = await prisma.supplier.findFirst({
+    where: { id: supplierId, vendorId },
+    select: { id: true },
+  });
+  if (!listing) return [];
+
+  return prisma.blackout.findMany({
+    where: { supplierId },
+    orderBy: { date: "asc" },
+    select: { id: true, date: true },
+  });
+}
+
+export async function addBlackout(
+  supplierId: string,
+  vendorId: string,
+  date: string
+): Promise<{ error?: string }> {
+  const listing = await prisma.supplier.findFirst({
+    where: { id: supplierId, vendorId },
+    select: { id: true },
+  });
+  if (!listing) return { error: "Listing not found." };
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return { error: "Choose a date." };
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  if (new Date(date) < today) return { error: "Blackout dates must be today or later." };
+
+  try {
+    await prisma.blackout.create({ data: { supplierId, date } });
+  } catch {
+    return { error: "That date is already blocked." };
+  }
+  return {};
+}
+
+export async function removeBlackout(
+  blackoutId: string,
+  vendorId: string
+): Promise<void> {
+  const row = await prisma.blackout.findUnique({
+    where: { id: blackoutId },
+    include: { supplier: { select: { vendorId: true } } },
+  });
+  if (!row || row.supplier.vendorId !== vendorId) return;
+  await prisma.blackout.delete({ where: { id: blackoutId } });
+}
+
 // Keep only the fields relevant to the listing's category; null the rest so a
 // venue never carries perHead, a caterer never carries capacity, etc.
 function normalise(input: ListingInput) {

@@ -126,7 +126,7 @@ export default async function TeamDetailPage({
       </div>
 
       <div className="mx-auto grid max-w-5xl gap-px border-t hairline-dark bg-[rgba(248,247,244,0.08)] px-6 py-0 md:grid-cols-2 md:gap-12 md:border-0 md:bg-transparent md:px-6 md:py-12">
-        {/* Panel A — the team */}
+        {/* Panel A: the team */}
         <section className="bg-black py-12 md:py-0">
           <h2 className="text-xl tracking-tight">The team</h2>
           <ul className="mt-6 divide-y divide-[rgba(248,247,244,0.1)] border-y hairline-dark">
@@ -156,7 +156,7 @@ export default async function TeamDetailPage({
           </div>
         </section>
 
-        {/* Panel B — resolved before you saw this page */}
+        {/* Panel B: resolved before you saw this page */}
         <section className="bg-black py-12 md:py-0">
           <h2 className="text-xl tracking-tight">
             Resolved before you saw this page

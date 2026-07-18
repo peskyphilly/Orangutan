@@ -169,7 +169,7 @@ export function ListingForm({
           className="h-4 w-4 accent-gold"
         />
         <span className="text-sm text-ink">
-          Publish — make this listing available to the composition engine
+          Publish: make this listing available to the composition engine
         </span>
       </label>
 

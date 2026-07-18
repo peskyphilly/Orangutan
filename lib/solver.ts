@@ -104,9 +104,10 @@ export interface SolveResult {
 }
 
 // ── Availability ────────────────────────────────────────────────────────────
-// Deterministic pseudo-availability by hashing id+date, ~72% available. This is
-// the MVP stand-in for a real bookings table; keep the signature so the swap to
-// `SELECT ... WHERE supplierId = ? AND date = ?` is a one-function change.
+// Default: deterministic pseudo-availability by hashing id+date (~72% free).
+// Production compose passes a real check that honours Blackout rows (and treats
+// vendor-owned listings as free unless blacked out). Keep this pluggable so the
+// solver stays pure and unit-testable.
 function hashStr(s: string): number {
   let h = 2166136261;
   for (let i = 0; i < s.length; i++) {
@@ -115,6 +116,8 @@ function hashStr(s: string): number {
   }
   return h >>> 0;
 }
+
+export type AvailabilityCheck = (id: string, date: string) => boolean;
 
 export function isAvailable(id: string, date: string): boolean {
   return hashStr(`${id}|${date}`) % 100 < 72;
@@ -131,11 +134,15 @@ function teamQuality(members: Supplier[]): number {
 }
 
 // ── Solver ──────────────────────────────────────────────────────────────────
-export function solve(suppliers: Supplier[], brief: Brief): SolveResult {
+export function solve(
+  suppliers: Supplier[],
+  brief: Brief,
+  availableOn: AvailabilityCheck = isAvailable
+): SolveResult {
   const totalSuppliers = suppliers.length;
 
   // 1. Availability filter.
-  const available = suppliers.filter((s) => isAvailable(s.id, brief.date));
+  const available = suppliers.filter((s) => availableOn(s.id, brief.date));
 
   const availVenues = available.filter((s) => s.category === "VENUE");
   const availCaterers = available.filter((s) => s.category === "CATERER");

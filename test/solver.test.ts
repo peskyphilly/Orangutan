@@ -6,6 +6,7 @@ import {
   isAvailable,
   solve,
 } from "../lib/solver";
+import { makeAvailabilityCheck } from "../lib/availability";
 import { SUPPLIERS } from "../lib/dataset";
 
 // Find a date for which every id in the set is available, so compatibility
@@ -256,5 +257,33 @@ describe("team distinctness", () => {
         expect(differ).toBe(true);
       }
     }
+  });
+});
+
+describe("blackout availability", () => {
+  it("blocks blacked-out suppliers and treats vendor listings as free otherwise", () => {
+    const date = "2027-06-01";
+    const check = makeAvailabilityCheck(
+      date,
+      [
+        { id: "seeded", vendorId: null },
+        { id: "vendor-listing", vendorId: "v1" },
+      ],
+      new Set(["vendor-listing"])
+    );
+
+    expect(check("vendor-listing", date)).toBe(false);
+    expect(check("vendor-listing", "2027-06-02")).toBe(true);
+    expect(check("seeded", date)).toBe(isAvailable("seeded", date));
+  });
+
+  it("keeps a vendor listing available when there is no blackout", () => {
+    const date = "2027-06-01";
+    const check = makeAvailabilityCheck(
+      date,
+      [{ id: "vendor-listing", vendorId: "v1" }],
+      new Set()
+    );
+    expect(check("vendor-listing", date)).toBe(true);
   });
 });

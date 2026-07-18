@@ -42,7 +42,7 @@ export default function VendorJoinPage() {
           Two details and you&apos;re in
         </h1>
         <p className="mt-4 max-w-xl animate-fade-up font-light leading-relaxed text-grey">
-          Your business name and an email. No password to set up — sign back in
+          Your business name and an email. No password to set up. Sign back in
           any time with the same email.
         </p>
 
@@ -76,7 +76,7 @@ export default function VendorJoinPage() {
               className="mt-3 w-full border border-light-line bg-white px-4 py-3 text-ink focus:border-gold"
             />
             <p className="mt-2 text-xs font-light text-grey">
-              Use the same email to sign back in later. That is all it takes — no
+              Use the same email to sign back in later. That is all it takes. No
               password to remember.
             </p>
           </div>

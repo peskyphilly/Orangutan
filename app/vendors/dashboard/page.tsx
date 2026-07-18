@@ -19,8 +19,8 @@ function priceLabel(l: {
   perHead: number | null;
 }): string {
   if (l.category === "CATERER")
-    return l.perHead != null ? `${gbp(l.perHead)} / head` : "—";
-  return l.price != null ? gbp(l.price) : "—";
+    return l.perHead != null ? `${gbp(l.perHead)} / head` : "n/a";
+  return l.price != null ? gbp(l.price) : "n/a";
 }
 
 export default async function VendorDashboard() {
@@ -76,7 +76,7 @@ export default async function VendorDashboard() {
           </Link>
         </div>
 
-        {/* Enquiries — the booking loop: a buyer confirmed a team with your listing */}
+        {/* Enquiries: booking loop when a buyer confirms a team with your listing */}
         {enquiries.length > 0 ? (
           <div className="mt-14">
             <h2 className="font-mono text-[11px] uppercase tracking-[0.2em] text-gold">
@@ -178,7 +178,7 @@ export default async function VendorDashboard() {
                       {CATEGORY_LABEL[l.category]} · {priceLabel(l)} ·{" "}
                       {l.recEvents > 0
                         ? `${l.recPct}% delivered as agreed · ${l.recEvents} verified events`
-                        : "New — no record yet"}
+                        : "New, no record yet"}
                     </p>
                   </div>
 

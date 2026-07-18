@@ -3,9 +3,9 @@ import "./globals.css";
 import { figtree, interTight, plexMono } from "./fonts";
 
 export const metadata: Metadata = {
-  title: "EventOS — Your event, solved. Not searched.",
+  title: "EventOS. Your event, solved. Not searched.",
   description:
-    "EventOS treats an event as a constraint-satisfaction problem. One brief in, complete supplier teams out — every conflict pre-resolved.",
+    "EventOS treats an event as a constraint-satisfaction problem. One brief in, complete supplier teams out. Every conflict pre-resolved.",
 };
 
 export default function RootLayout({
