@@ -81,9 +81,12 @@ export default async function LandingPage() {
       <div className="gold-glow">
         <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
           <span className="font-display text-lg tracking-tightest">EventOS</span>
-          <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-dim">
-            Composition engine
-          </span>
+          <Link
+            href="/vendors"
+            className="font-mono text-[11px] uppercase tracking-[0.18em] text-dim transition-colors hover:text-white"
+          >
+            For suppliers →
+          </Link>
         </header>
 
         <section className="mx-auto max-w-6xl px-6 pb-24 pt-16 md:pt-24">

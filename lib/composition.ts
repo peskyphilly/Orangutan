@@ -11,7 +11,9 @@ export interface StoredTeams {
 }
 
 async function loadSuppliers(): Promise<Supplier[]> {
-  const rows = await prisma.supplier.findMany();
+  // The engine composes from published listings only — seeded demo suppliers and
+  // vendor-created listings alike. Vendor drafts stay out until published.
+  const rows = await prisma.supplier.findMany({ where: { status: "published" } });
   return rows as unknown as Supplier[];
 }
 

@@ -4,7 +4,9 @@ import { SUPPLIERS } from "../lib/dataset";
 const prisma = new PrismaClient();
 
 async function main() {
-  await prisma.supplier.deleteMany();
+  // Only reset the seeded demo suppliers — never touch vendor-created listings,
+  // which have a vendorId and must survive redeploys/reseeds.
+  await prisma.supplier.deleteMany({ where: { vendorId: null } });
   for (const s of SUPPLIERS) {
     await prisma.supplier.create({
       data: {
