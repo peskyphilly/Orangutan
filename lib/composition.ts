@@ -18,16 +18,36 @@ export class ConfirmConflictError extends Error {
   }
 }
 
-type SupplierRow = {
-  id: string;
+type SupplierRow = Supplier & {
   vendorId: string | null;
-} & Supplier;
+};
 
 async function loadPublishedSuppliers(): Promise<SupplierRow[]> {
   // Published listings only: seeded demo suppliers and vendor-created listings.
   // Vendor drafts stay out until published.
-  const rows = await prisma.supplier.findMany({ where: { status: "published" } });
-  return rows as unknown as SupplierRow[];
+  const rows = await prisma.supplier.findMany({
+    where: { status: "published" },
+    include: { vendor: { select: { name: true } } },
+  });
+  return rows.map((r) => ({
+    id: r.id,
+    name: r.name,
+    category: r.category as Supplier["category"],
+    price: r.price,
+    perHead: r.perHead,
+    capacity: r.capacity,
+    kitchen: r.kitchen,
+    rigging: r.rigging,
+    stepFree: r.stepFree,
+    halal: r.halal,
+    needsKitchen: r.needsKitchen,
+    needsRigging: r.needsRigging,
+    staging: r.staging,
+    recPct: r.recPct,
+    recEvents: r.recEvents,
+    vendorId: r.vendorId,
+    vendorName: r.vendor?.name ?? null,
+  }));
 }
 
 export async function createComposition(

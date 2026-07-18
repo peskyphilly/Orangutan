@@ -30,6 +30,10 @@ export interface Supplier {
   staging?: boolean | null; // production
   recPct: number; // delivered-as-agreed %
   recEvents: number; // count of client-confirmed events
+  /** Set for marketplace (vendor-created) listings; null for seeded demo suppliers. */
+  vendorId?: string | null;
+  /** Vendor business name — preferred buyer-facing label when present. */
+  vendorName?: string | null;
 }
 
 export interface Brief {
@@ -124,8 +128,20 @@ export function isAvailable(id: string, date: string): boolean {
 }
 
 // ── Scoring ─────────────────────────────────────────────────────────────────
+// Cold-start: newcomers with no verified events get a neutral rank score so
+// they can surface in composed teams. Display still uses real recPct/recEvents.
+const COLD_START_SCORE = 94;
+
 function memberScore(s: Supplier): number {
+  if (s.recEvents === 0) return COLD_START_SCORE;
   return s.recPct + Math.min(s.recEvents, 60) / 12;
+}
+
+function teamHasMarketplace(t: Team): boolean {
+  const m = t.members;
+  return [m.venue, m.caterer, m.production, m.photographer, m.florist].some(
+    (s) => Boolean(s.vendorId)
+  );
 }
 
 function teamQuality(members: Supplier[]): number {
@@ -266,10 +282,11 @@ function buildTeam(
 }
 
 function row(role: TeamRow["role"], s: Supplier, price: number): TeamRow {
+  const label = s.vendorName?.trim() || s.name;
   return {
     role,
     supplierId: s.id,
-    name: s.name,
+    name: label,
     price,
     recPct: s.recPct,
     recEvents: s.recEvents,
@@ -278,7 +295,9 @@ function row(role: TeamRow["role"], s: Supplier, price: number): TeamRow {
 
 // 5. Selection — up to 3 teams that differ in at least venue or caterer where
 // possible: highest quality (Recommended), lowest total (Best value), best
-// quality/total ratio (Balanced).
+// quality/total ratio (Balanced). When marketplace listings exist in the pool
+// but none made the cut, replace Balanced with the best-value marketplace team
+// so new vendors are not permanently buried by seeded competitors.
 function select(teams: Team[]): Team[] {
   if (teams.length === 0) return [];
 
@@ -313,6 +332,22 @@ function select(teams: Team[]): Team[] {
   add(byQuality, "Recommended");
   add(byTotal, "Best value");
   add(byRatio, "Balanced");
+
+  if (chosen.length > 0 && !chosen.some(teamHasMarketplace)) {
+    const marketplace = [...teams]
+      .filter(teamHasMarketplace)
+      .sort((a, b) => a.total - b.total || b.quality - a.quality);
+    let cand =
+      marketplace.find((t) => notYetChosen(t) && distinct(t)) ??
+      marketplace.find(notYetChosen) ??
+      marketplace[0];
+    if (cand) {
+      cand = { ...cand, tag: "Balanced" };
+      if (chosen.length >= 3) chosen[2] = cand;
+      else chosen.push(cand);
+    }
+  }
+
   return chosen;
 }
 

@@ -15,5 +15,6 @@ export function prettyDate(iso: string): string {
 }
 
 export function recordStamp(recPct: number, recEvents: number): string {
+  if (recEvents === 0) return "New · no verified events yet";
   return `${recPct}% delivered as agreed · ${recEvents} verified events`;
 }

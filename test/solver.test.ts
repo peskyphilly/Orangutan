@@ -287,3 +287,28 @@ describe("blackout availability", () => {
     expect(check("vendor-listing", date)).toBe(true);
   });
 });
+
+describe("marketplace listings", () => {
+  it("surfaces a new vendor photographer under the business name", () => {
+    const marketplacePhotographer: Supplier = {
+      id: "ph-lexify",
+      name: "Photography",
+      category: "PHOTOGRAPHER",
+      price: 2000,
+      recPct: 0,
+      recEvents: 0,
+      vendorId: "vendor-lexify",
+      vendorName: "Lexify Scale",
+    };
+    const pool = [...SUPPLIERS, marketplacePhotographer];
+    const { teams } = solve(pool, DEMO_BRIEF, () => true);
+
+    expect(teams.length).toBeGreaterThan(0);
+    const names = teams.flatMap((t) => t.rows.map((r) => r.name));
+    expect(names).toContain("Lexify Scale");
+    expect(
+      teams.some((t) => t.members.photographer.id === "ph-lexify")
+    ).toBe(true);
+  });
+});
+
