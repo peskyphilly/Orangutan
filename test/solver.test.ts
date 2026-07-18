@@ -289,7 +289,7 @@ describe("blackout availability", () => {
 });
 
 describe("marketplace listings", () => {
-  it("surfaces a new vendor photographer under the business name", () => {
+  it("prefers a real vendor photographer over seeded demos", () => {
     const marketplacePhotographer: Supplier = {
       id: "ph-lexify",
       name: "Photography",
@@ -304,11 +304,13 @@ describe("marketplace listings", () => {
     const { teams } = solve(pool, DEMO_BRIEF, () => true);
 
     expect(teams.length).toBeGreaterThan(0);
-    const names = teams.flatMap((t) => t.rows.map((r) => r.name));
-    expect(names).toContain("Lexify Scale");
-    expect(
-      teams.some((t) => t.members.photographer.id === "ph-lexify")
-    ).toBe(true);
+    // Seeded photographers are filler once a real listing exists.
+    for (const t of teams) {
+      expect(t.members.photographer.id).toBe("ph-lexify");
+      expect(
+        t.rows.find((r) => r.role === "Photography")?.name
+      ).toBe("Lexify Scale");
+    }
   });
 });
 

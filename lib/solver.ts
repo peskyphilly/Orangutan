@@ -144,6 +144,12 @@ function teamHasMarketplace(t: Team): boolean {
   );
 }
 
+/** Seeded rows are demo filler. When a real vendor listing fits, use only those. */
+function preferMarketplace(pool: Supplier[]): Supplier[] {
+  const real = pool.filter((s) => Boolean(s.vendorId));
+  return real.length > 0 ? real : pool;
+}
+
 function teamQuality(members: Supplier[]): number {
   const sum = members.reduce((acc, s) => acc + memberScore(s), 0);
   return sum / members.length;
@@ -163,23 +169,28 @@ export function solve(
   const availVenues = available.filter((s) => s.category === "VENUE");
   const availCaterers = available.filter((s) => s.category === "CATERER");
   const availProduction = available.filter((s) => s.category === "PRODUCTION");
-  const photographers = available.filter((s) => s.category === "PHOTOGRAPHER");
-  const florists = available.filter((s) => s.category === "FLORIST");
+  const availPhotographers = available.filter((s) => s.category === "PHOTOGRAPHER");
+  const availFlorists = available.filter((s) => s.category === "FLORIST");
 
-  // 2. Category requirement filters.
-  const venues = availVenues.filter(
-    (v) =>
-      (v.capacity ?? 0) >= brief.guests &&
-      (!brief.stepFree || v.stepFree === true) &&
-      (!brief.kitchen || v.kitchen === true) &&
-      (!brief.rigging || v.rigging === true)
+  // 2. Category requirement filters, then prefer real marketplace listings over
+  // seeded demo suppliers whenever at least one real listing still fits.
+  const venues = preferMarketplace(
+    availVenues.filter(
+      (v) =>
+        (v.capacity ?? 0) >= brief.guests &&
+        (!brief.stepFree || v.stepFree === true) &&
+        (!brief.kitchen || v.kitchen === true) &&
+        (!brief.rigging || v.rigging === true)
+    )
   );
-  const caterers = availCaterers.filter(
-    (c) => !brief.halal || c.halal === true
+  const caterers = preferMarketplace(
+    availCaterers.filter((c) => !brief.halal || c.halal === true)
   );
-  const production = availProduction.filter(
-    (p) => !brief.staging || p.staging === true
+  const production = preferMarketplace(
+    availProduction.filter((p) => !brief.staging || p.staging === true)
   );
+  const photographers = preferMarketplace(availPhotographers);
+  const florists = preferMarketplace(availFlorists);
 
   const requirementsMet =
     venues.length +
