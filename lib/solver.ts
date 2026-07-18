@@ -155,51 +155,14 @@ function teamQuality(members: Supplier[]): number {
   return sum / members.length;
 }
 
-// ── Solver ──────────────────────────────────────────────────────────────────
-export function solve(
-  suppliers: Supplier[],
+function enumerateTeams(
   brief: Brief,
-  availableOn: AvailabilityCheck = isAvailable
-): SolveResult {
-  const totalSuppliers = suppliers.length;
-
-  // 1. Availability filter.
-  const available = suppliers.filter((s) => availableOn(s.id, brief.date));
-
-  const availVenues = available.filter((s) => s.category === "VENUE");
-  const availCaterers = available.filter((s) => s.category === "CATERER");
-  const availProduction = available.filter((s) => s.category === "PRODUCTION");
-  const availPhotographers = available.filter((s) => s.category === "PHOTOGRAPHER");
-  const availFlorists = available.filter((s) => s.category === "FLORIST");
-
-  // 2. Category requirement filters, then prefer real marketplace listings over
-  // seeded demo suppliers whenever at least one real listing still fits.
-  const venues = preferMarketplace(
-    availVenues.filter(
-      (v) =>
-        (v.capacity ?? 0) >= brief.guests &&
-        (!brief.stepFree || v.stepFree === true) &&
-        (!brief.kitchen || v.kitchen === true) &&
-        (!brief.rigging || v.rigging === true)
-    )
-  );
-  const caterers = preferMarketplace(
-    availCaterers.filter((c) => !brief.halal || c.halal === true)
-  );
-  const production = preferMarketplace(
-    availProduction.filter((p) => !brief.staging || p.staging === true)
-  );
-  const photographers = preferMarketplace(availPhotographers);
-  const florists = preferMarketplace(availFlorists);
-
-  const requirementsMet =
-    venues.length +
-    caterers.length +
-    production.length +
-    photographers.length +
-    florists.length;
-
-  // 3. Compatibility enumeration + budget ceiling.
+  venues: Supplier[],
+  caterers: Supplier[],
+  production: Supplier[],
+  photographers: Supplier[],
+  florists: Supplier[]
+): { teams: Team[]; candidateCombos: number } {
   const teams: Team[] = [];
   let candidateCombos = 0;
 
@@ -227,6 +190,92 @@ export function solve(
       }
     }
   }
+
+  return { teams, candidateCombos };
+}
+
+// ── Solver ──────────────────────────────────────────────────────────────────
+export function solve(
+  suppliers: Supplier[],
+  brief: Brief,
+  availableOn: AvailabilityCheck = isAvailable
+): SolveResult {
+  const totalSuppliers = suppliers.length;
+
+  // 1. Availability filter.
+  const available = suppliers.filter((s) => availableOn(s.id, brief.date));
+
+  const availVenues = available.filter((s) => s.category === "VENUE");
+  const availCaterers = available.filter((s) => s.category === "CATERER");
+  const availProduction = available.filter((s) => s.category === "PRODUCTION");
+  const availPhotographers = available.filter((s) => s.category === "PHOTOGRAPHER");
+  const availFlorists = available.filter((s) => s.category === "FLORIST");
+
+  // 2. Category requirement filters.
+  const venuesAll = availVenues.filter(
+    (v) =>
+      (v.capacity ?? 0) >= brief.guests &&
+      (!brief.stepFree || v.stepFree === true) &&
+      (!brief.kitchen || v.kitchen === true) &&
+      (!brief.rigging || v.rigging === true)
+  );
+  const caterersAll = availCaterers.filter(
+    (c) => !brief.halal || c.halal === true
+  );
+  const productionAll = availProduction.filter(
+    (p) => !brief.staging || p.staging === true
+  );
+  const photographersAll = availPhotographers;
+  const floristsAll = availFlorists;
+
+  // 3. Prefer real marketplace listings over seeded demos, but if that yields
+  // zero teams (e.g. one pricey real venue), fall back to the full pool so
+  // compose never blanks incorrectly.
+  const preferred = {
+    venues: preferMarketplace(venuesAll),
+    caterers: preferMarketplace(caterersAll),
+    production: preferMarketplace(productionAll),
+    photographers: preferMarketplace(photographersAll),
+    florists: preferMarketplace(floristsAll),
+  };
+
+  let { teams, candidateCombos } = enumerateTeams(
+    brief,
+    preferred.venues,
+    preferred.caterers,
+    preferred.production,
+    preferred.photographers,
+    preferred.florists
+  );
+
+  let venues = preferred.venues;
+  let caterers = preferred.caterers;
+  let production = preferred.production;
+  let photographers = preferred.photographers;
+  let florists = preferred.florists;
+
+  if (teams.length === 0) {
+    ({ teams, candidateCombos } = enumerateTeams(
+      brief,
+      venuesAll,
+      caterersAll,
+      productionAll,
+      photographersAll,
+      floristsAll
+    ));
+    venues = venuesAll;
+    caterers = caterersAll;
+    production = productionAll;
+    photographers = photographersAll;
+    florists = floristsAll;
+  }
+
+  const requirementsMet =
+    venues.length +
+    caterers.length +
+    production.length +
+    photographers.length +
+    florists.length;
 
   const consistentTeams = teams.length;
   const composed = select(teams);
