@@ -4,16 +4,6 @@ import { SUPPLIERS } from "../lib/dataset";
 const prisma = new PrismaClient();
 
 async function main() {
-  // Ensure booking-lock column exists on Postgres even if db push reported no-op.
-  // Safe/idempotent on both SQLite and Postgres.
-  try {
-    await prisma.$executeRawUnsafe(
-      `ALTER TABLE "Blackout" ADD COLUMN IF NOT EXISTS "reason" TEXT NOT NULL DEFAULT 'vendor'`
-    );
-  } catch {
-    // SQLite older versions may not support IF NOT EXISTS on ADD COLUMN; ignore.
-  }
-
   // Non-destructive: upsert seeded demo suppliers only. Never delete rows, so
   // blackouts and booking history on those ids survive redeploys. Vendor-created
   // listings (vendorId set) are left completely alone.

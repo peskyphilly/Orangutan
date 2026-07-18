@@ -85,30 +85,19 @@ export async function registerBuyer(input: {
     where: { email },
     include: { vendor: true },
   });
-  if (existing?.passwordHash) {
+  if (existing) {
     return { error: "An account with this email already exists. Sign in instead." };
   }
 
-  // Legacy email-only rows (no password) can be claimed once.
-  const user = existing
-    ? await prisma.user.update({
-        where: { id: existing.id },
-        data: {
-          name,
-          passwordHash: hashPassword(input.password),
-          role: existing.role === "VENDOR" ? "VENDOR" : "BUYER",
-        },
-        include: { vendor: true },
-      })
-    : await prisma.user.create({
-        data: {
-          name,
-          email,
-          passwordHash: hashPassword(input.password),
-          role: "BUYER",
-        },
-        include: { vendor: true },
-      });
+  const user = await prisma.user.create({
+    data: {
+      name,
+      email,
+      passwordHash: hashPassword(input.password),
+      role: "BUYER",
+    },
+    include: { vendor: true },
+  });
 
   await createSession(user.id);
   return {
@@ -139,41 +128,25 @@ export async function registerVendor(input: {
     where: { email },
     include: { vendor: true },
   });
-  if (existing?.passwordHash) {
+  if (existing) {
     return { error: "An account with this email already exists. Sign in instead." };
   }
 
-  let user;
-  if (existing) {
-    user = await prisma.user.update({
-      where: { id: existing.id },
-      data: {
-        name,
-        passwordHash: hashPassword(input.password),
-        role: "VENDOR",
-        vendor: existing.vendor
-          ? { update: { name, contactEmail: email } }
-          : { create: { name, contactEmail: email } },
-      },
-      include: { vendor: true },
-    });
-  } else {
-    user = await prisma.user.create({
-      data: {
-        name,
-        email,
-        passwordHash: hashPassword(input.password),
-        role: "VENDOR",
-        vendor: {
-          create: {
-            name,
-            contactEmail: email,
-          },
+  const user = await prisma.user.create({
+    data: {
+      name,
+      email,
+      passwordHash: hashPassword(input.password),
+      role: "VENDOR",
+      vendor: {
+        create: {
+          name,
+          contactEmail: email,
         },
       },
-      include: { vendor: true },
-    });
-  }
+    },
+    include: { vendor: true },
+  });
 
   await createSession(user.id);
   return { vendorId: user.vendor!.id };
