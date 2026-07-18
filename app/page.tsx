@@ -113,19 +113,31 @@ export default async function LandingPage() {
               </p>
 
               <div
-                className="mt-9 animate-fade-up"
+                className="mt-9 flex animate-fade-up flex-col gap-3 sm:flex-row sm:items-center"
                 style={{ animationDelay: "240ms" }}
               >
                 <Link
                   href="/compose"
-                  className="inline-flex items-center gap-3 border border-gold bg-gold px-7 py-3.5 font-medium text-black transition-transform hover:-translate-y-1 focus-visible:-translate-y-1"
+                  className="inline-flex items-center justify-center gap-3 border border-gold bg-gold px-7 py-3.5 font-medium text-black transition-transform hover:-translate-y-1 focus-visible:-translate-y-1"
                 >
-                  Compose an event
+                  Plan an event
                   <span aria-hidden className="font-mono">
                     →
                   </span>
                 </Link>
+                <Link
+                  href="/vendors"
+                  className="inline-flex items-center justify-center gap-3 border border-[rgba(248,247,244,0.25)] px-7 py-3.5 font-medium text-white transition-colors hover:border-gold hover:text-gold-soft"
+                >
+                  List your services
+                </Link>
               </div>
+              <p
+                className="mt-4 animate-fade-up text-sm font-light text-grey"
+                style={{ animationDelay: "300ms" }}
+              >
+                Planning an event? Start on the left. A supplier? List on the right.
+              </p>
             </div>
 
             {/* Right: live team preview */}

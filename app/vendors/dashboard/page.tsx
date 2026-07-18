@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getVendorSessionId } from "@/lib/vendor-session";
-import { getVendor, listListings } from "@/lib/vendors";
+import { getVendor, listEnquiries, listListings } from "@/lib/vendors";
 import { CATEGORY_LABEL } from "@/lib/listing-fields";
-import { gbp } from "@/lib/format";
+import { gbp, prettyDate } from "@/lib/format";
 import {
   deleteListingAction,
+  respondEnquiryAction,
   signOutVendorAction,
   toggleListingStatusAction,
 } from "../actions";
@@ -30,6 +31,8 @@ export default async function VendorDashboard() {
 
   const listings = await listListings(vendorId);
   const published = listings.filter((l) => l.status === "published").length;
+  const enquiries = await listEnquiries(vendorId);
+  const newEnquiries = enquiries.filter((e) => e.status === "new").length;
 
   return (
     <main className="min-h-screen bg-white text-ink">
@@ -58,7 +61,8 @@ export default async function VendorDashboard() {
             </h1>
             <p className="mt-3 font-mono text-xs text-grey">
               {listings.length} {listings.length === 1 ? "listing" : "listings"} ·{" "}
-              {published} published
+              {published} published · {newEnquiries} new{" "}
+              {newEnquiries === 1 ? "enquiry" : "enquiries"}
             </p>
           </div>
           <Link
@@ -71,6 +75,76 @@ export default async function VendorDashboard() {
             </span>
           </Link>
         </div>
+
+        {/* Enquiries — the booking loop: a buyer confirmed a team with your listing */}
+        {enquiries.length > 0 ? (
+          <div className="mt-14">
+            <h2 className="font-mono text-[11px] uppercase tracking-[0.2em] text-gold">
+              Enquiries
+            </h2>
+            <ul className="mt-5 divide-y divide-[#E6E3DB] border-y hairline-light">
+              {enquiries.map((e) => (
+                <li
+                  key={e.id}
+                  className="flex flex-col gap-4 py-5 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <span className="font-medium text-ink">{e.listingName}</span>
+                      <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-grey">
+                        {e.role}
+                      </span>
+                      <span
+                        className={`font-mono text-[10px] uppercase tracking-[0.14em] ${
+                          e.status === "new"
+                            ? "text-gold"
+                            : e.status === "accepted"
+                              ? "text-ink"
+                              : "text-grey"
+                        }`}
+                      >
+                        {e.status === "new"
+                          ? "New"
+                          : e.status === "accepted"
+                            ? "Accepted"
+                            : "Declined"}
+                      </span>
+                    </div>
+                    <p className="mt-1 font-mono text-xs text-grey">
+                      {e.occasion} · {prettyDate(e.eventDate)} · {e.guests} guests ·{" "}
+                      {gbp(e.amount)} · ref {e.reference}
+                    </p>
+                  </div>
+
+                  {e.status === "new" ? (
+                    <div className="flex items-center gap-3">
+                      <form action={respondEnquiryAction}>
+                        <input type="hidden" name="id" value={e.id} />
+                        <input type="hidden" name="status" value="accepted" />
+                        <button
+                          type="submit"
+                          className="border border-ink px-4 py-2 text-sm font-medium text-ink transition-colors hover:bg-ink hover:text-white"
+                        >
+                          Accept
+                        </button>
+                      </form>
+                      <form action={respondEnquiryAction}>
+                        <input type="hidden" name="id" value={e.id} />
+                        <input type="hidden" name="status" value="declined" />
+                        <button
+                          type="submit"
+                          className="px-4 py-2 text-sm font-light text-grey underline-offset-4 hover:text-ink hover:underline"
+                        >
+                          Decline
+                        </button>
+                      </form>
+                    </div>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
 
         {listings.length === 0 ? (
           <div className="mt-12 max-w-2xl border-l-2 border-gold pl-6">

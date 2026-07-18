@@ -78,6 +78,35 @@ export async function findVendorByEmail(
   return user?.vendor ?? null;
 }
 
+export interface EnquiryRecord {
+  id: string;
+  reference: string;
+  listingName: string;
+  role: string;
+  occasion: string;
+  eventDate: string;
+  guests: number;
+  amount: number;
+  status: string;
+  createdAt: Date;
+}
+
+export async function listEnquiries(vendorId: string): Promise<EnquiryRecord[]> {
+  const rows = await prisma.enquiry.findMany({
+    where: { vendorId },
+    orderBy: { createdAt: "desc" },
+  });
+  return rows as unknown as EnquiryRecord[];
+}
+
+export async function setEnquiryStatus(
+  id: string,
+  vendorId: string,
+  status: string
+) {
+  return prisma.enquiry.updateMany({ where: { id, vendorId }, data: { status } });
+}
+
 export async function listListings(vendorId: string): Promise<ListingRecord[]> {
   const rows = await prisma.supplier.findMany({
     where: { vendorId },

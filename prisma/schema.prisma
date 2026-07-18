@@ -69,8 +69,29 @@ model Vendor {
   city         String?
   createdAt    DateTime @default(now())
 
-  user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  listings Supplier[]
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listings  Supplier[]
+  enquiries Enquiry[]
+}
+
+// An enquiry a vendor receives when a buyer confirms a team containing one of
+// their listings. This is the demo's booking loop — buyer confirm → vendor sees it.
+model Enquiry {
+  id            String   @id @default(cuid())
+  createdAt     DateTime @default(now())
+  compositionId String
+  reference     String
+  vendorId      String
+  supplierId    String
+  listingName   String
+  role          String
+  occasion      String
+  eventDate     String
+  guests        Int
+  amount        Int
+  status        String   @default("new") // new | accepted | declined
+
+  vendor Vendor @relation(fields: [vendorId], references: [id], onDelete: Cascade)
 }
 
 model Supplier {

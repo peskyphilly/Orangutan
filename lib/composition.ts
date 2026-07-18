@@ -90,5 +90,46 @@ export async function confirmComposition(
       teams: JSON.stringify(stored),
     },
   });
+
+  await createEnquiriesForTeam(id, reference, existing.brief, existing.teams, teamId);
   return reference;
+}
+
+// For every member of the confirmed team that is a vendor-owned listing, record
+// an enquiry so the vendor sees the booking land in their dashboard. Seeded demo
+// suppliers have no vendor, so they generate nothing.
+async function createEnquiriesForTeam(
+  compositionId: string,
+  reference: string,
+  brief: Brief,
+  teams: StoredTeams,
+  teamId: string
+) {
+  const team = teams.list.find((t) => t.id === teamId);
+  if (!team) return;
+
+  const suppliers = await prisma.supplier.findMany({
+    where: { id: { in: team.rows.map((r) => r.supplierId) }, vendorId: { not: null } },
+    select: { id: true, vendorId: true },
+  });
+  const vendorBySupplier = new Map(suppliers.map((s) => [s.id, s.vendorId!]));
+
+  const enquiries = team.rows
+    .filter((r) => vendorBySupplier.has(r.supplierId))
+    .map((r) => ({
+      compositionId,
+      reference,
+      vendorId: vendorBySupplier.get(r.supplierId)!,
+      supplierId: r.supplierId,
+      listingName: r.name,
+      role: r.role,
+      occasion: brief.occasion,
+      eventDate: brief.date,
+      guests: brief.guests,
+      amount: r.price,
+    }));
+
+  if (enquiries.length > 0) {
+    await prisma.enquiry.createMany({ data: enquiries });
+  }
 }

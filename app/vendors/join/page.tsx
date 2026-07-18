@@ -12,7 +12,7 @@ function SubmitButton() {
       disabled={pending}
       className="inline-flex items-center gap-3 bg-ink px-7 py-3.5 font-medium text-white transition-transform hover:-translate-y-1 focus-visible:-translate-y-1 disabled:opacity-60"
     >
-      {pending ? "Setting up" : "Create supplier account"}
+      {pending ? "Setting up" : "Continue"}
       <span aria-hidden className="font-mono">
         →
       </span>
@@ -39,11 +39,11 @@ export default function VendorJoinPage() {
           List your services
         </p>
         <h1 className="mt-4 animate-fade-up text-4xl tracking-tight md:text-5xl">
-          Set up your supplier account
+          Two details and you&apos;re in
         </h1>
         <p className="mt-4 max-w-xl animate-fade-up font-light leading-relaxed text-grey">
-          Tell us who you are, then add your listings. Sign in later with the same
-          email to manage them.
+          Your business name and an email. No password to set up — sign back in
+          any time with the same email.
         </p>
 
         <form action={formAction} className="mt-10 space-y-8">
@@ -76,32 +76,9 @@ export default function VendorJoinPage() {
               className="mt-3 w-full border border-light-line bg-white px-4 py-3 text-ink focus:border-gold"
             />
             <p className="mt-2 text-xs font-light text-grey">
-              This is how you sign back in and where enquiries are sent.
+              Use the same email to sign back in later. That is all it takes — no
+              password to remember.
             </p>
-          </div>
-
-          <div className="grid gap-6 sm:grid-cols-2">
-            <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-ink">
-                Phone <span className="text-grey">(optional)</span>
-              </label>
-              <input
-                id="phone"
-                name="phone"
-                className="mt-3 w-full border border-light-line bg-white px-4 py-3 text-ink focus:border-gold"
-              />
-            </div>
-            <div>
-              <label htmlFor="city" className="block text-sm font-medium text-ink">
-                City <span className="text-grey">(optional)</span>
-              </label>
-              <input
-                id="city"
-                name="city"
-                placeholder="London"
-                className="mt-3 w-full border border-light-line bg-white px-4 py-3 text-ink focus:border-gold"
-              />
-            </div>
           </div>
 
           {state.error ? (

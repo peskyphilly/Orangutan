@@ -73,8 +73,27 @@ model Vendor {
   city         String?
   createdAt    DateTime @default(now())
 
-  user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  listings Supplier[]
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listings  Supplier[]
+  enquiries Enquiry[]
+}
+
+model Enquiry {
+  id            String   @id @default(cuid())
+  createdAt     DateTime @default(now())
+  compositionId String
+  reference     String
+  vendorId      String
+  supplierId    String
+  listingName   String
+  role          String
+  occasion      String
+  eventDate     String
+  guests        Int
+  amount        Int
+  status        String   @default("new")
+
+  vendor Vendor @relation(fields: [vendorId], references: [id], onDelete: Cascade)
 }
 
 model Supplier {

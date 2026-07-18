@@ -8,6 +8,7 @@ import {
   createListing,
   deleteListing,
   joinVendor,
+  setEnquiryStatus,
   setListingStatus,
   updateListing,
 } from "@/lib/vendors";
@@ -133,5 +134,16 @@ export async function deleteListingAction(formData: FormData): Promise<void> {
   if (!vendorId) redirect("/vendors/join");
   const id = String(formData.get("id") ?? "");
   if (id) await deleteListing(id, vendorId);
+  revalidatePath("/vendors/dashboard");
+}
+
+export async function respondEnquiryAction(formData: FormData): Promise<void> {
+  const vendorId = getVendorSessionId();
+  if (!vendorId) redirect("/vendors/join");
+  const id = String(formData.get("id") ?? "");
+  const status = String(formData.get("status") ?? "");
+  if (id && (status === "accepted" || status === "declined")) {
+    await setEnquiryStatus(id, vendorId, status);
+  }
   revalidatePath("/vendors/dashboard");
 }
