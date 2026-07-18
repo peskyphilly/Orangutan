@@ -8,6 +8,7 @@ import {
   createComposition,
 } from "@/lib/composition";
 import { getCurrentUser } from "@/lib/auth";
+import { clientIp, enforceRateLimit } from "@/lib/rate-limit";
 
 export interface ComposeState {
   error?: string;
@@ -17,6 +18,13 @@ export async function composeAction(
   _prev: ComposeState,
   formData: FormData
 ): Promise<ComposeState> {
+  const user = await getCurrentUser();
+  const limited = await enforceRateLimit(
+    "compose",
+    user?.id ?? clientIp()
+  );
+  if (limited) return { error: limited };
+
   const occasion = String(formData.get("occasion") ?? "");
   const date = String(formData.get("date") ?? "");
   const guests = Number(formData.get("guests"));
@@ -51,7 +59,6 @@ export async function composeAction(
     rigging,
   };
 
-  const user = await getCurrentUser();
   const id = await createComposition(brief, user?.id ?? null);
   redirect(`/composing/${id}`);
 }
@@ -73,6 +80,9 @@ export async function confirmAction(
     const next = encodeURIComponent(`/teams/${encodeURIComponent(teamId)}?c=${id}`);
     redirect(`/account/signin?next=${next}`);
   }
+
+  const limited = await enforceRateLimit("confirm", user.id);
+  if (limited) return { error: limited };
 
   try {
     const reference = await confirmComposition(id, teamId, user.id);

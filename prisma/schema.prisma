@@ -113,3 +113,10 @@ model Composition {
   userId String? // the buyer who owns this composition
   user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
 }
+
+// Fixed-window counters for auth/compose/confirm abuse protection.
+model RateLimit {
+  key     String   @id
+  count   Int      @default(0)
+  resetAt DateTime
+}

@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { destroySession, registerBuyer, signIn } from "@/lib/auth";
+import { clientIp, enforceRateLimit } from "@/lib/rate-limit";
 
 export interface AuthFormState {
   error?: string;
@@ -17,6 +18,9 @@ export async function joinBuyerAction(
   _prev: AuthFormState,
   formData: FormData
 ): Promise<AuthFormState> {
+  const limited = await enforceRateLimit("register", clientIp());
+  if (limited) return { error: limited };
+
   const name = String(formData.get("name") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
@@ -35,6 +39,12 @@ export async function signInBuyerAction(
   formData: FormData
 ): Promise<AuthFormState> {
   const email = String(formData.get("email") ?? "").trim();
+  const limited = await enforceRateLimit(
+    "signin",
+    `${clientIp()}:${email.toLowerCase()}`
+  );
+  if (limited) return { error: limited };
+
   const password = String(formData.get("password") ?? "");
   const next = safeNext(formData.get("next"));
 

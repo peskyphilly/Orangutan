@@ -17,6 +17,7 @@ import {
 import { CATEGORY_FIELDS } from "@/lib/listing-fields";
 import { getVendorSessionId } from "@/lib/vendor-session";
 import { destroySession, registerVendor, signIn } from "@/lib/auth";
+import { clientIp, enforceRateLimit } from "@/lib/rate-limit";
 
 const CATEGORIES: ListingCategory[] = [
   "VENUE",
@@ -34,6 +35,9 @@ export async function joinVendorAction(
   _prev: JoinState,
   formData: FormData
 ): Promise<JoinState> {
+  const limited = await enforceRateLimit("register", `vendor:${clientIp()}`);
+  if (limited) return { error: limited };
+
   const name = String(formData.get("name") ?? "").trim();
   const contactEmail = String(formData.get("contactEmail") ?? "").trim();
   const password = String(formData.get("password") ?? "");
@@ -55,6 +59,12 @@ export async function signInVendorAction(
   formData: FormData
 ): Promise<JoinState> {
   const email = String(formData.get("contactEmail") ?? "").trim();
+  const limited = await enforceRateLimit(
+    "signin",
+    `${clientIp()}:${email.toLowerCase()}`
+  );
+  if (limited) return { error: limited };
+
   const password = String(formData.get("password") ?? "");
 
   const result = await signIn({ email, password });

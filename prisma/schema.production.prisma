@@ -111,3 +111,9 @@ model Composition {
   userId String?
   user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
 }
+
+model RateLimit {
+  key     String   @id
+  count   Int      @default(0)
+  resetAt DateTime
+}
