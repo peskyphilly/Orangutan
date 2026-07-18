@@ -8,17 +8,13 @@ import {
   addBlackout,
   createListing,
   deleteListing,
-  joinVendor,
   removeBlackout,
   setEnquiryStatus,
   setListingStatus,
   updateListing,
 } from "@/lib/vendors";
-import {
-  clearVendorSession,
-  getVendorSessionId,
-  setVendorSession,
-} from "@/lib/vendor-session";
+import { getVendorSessionId } from "@/lib/vendor-session";
+import { destroySession, registerVendor, signIn } from "@/lib/auth";
 
 const CATEGORIES: ListingCategory[] = [
   "VENUE",
@@ -38,20 +34,39 @@ export async function joinVendorAction(
 ): Promise<JoinState> {
   const name = String(formData.get("name") ?? "").trim();
   const contactEmail = String(formData.get("contactEmail") ?? "").trim();
-  const phone = String(formData.get("phone") ?? "").trim();
-  const city = String(formData.get("city") ?? "").trim();
+  const password = String(formData.get("password") ?? "");
+  const confirm = String(formData.get("confirmPassword") ?? "");
 
-  if (!name) return { error: "Enter your business name." };
-  if (!contactEmail || !/^\S+@\S+\.\S+$/.test(contactEmail))
-    return { error: "Enter a valid contact email." };
+  if (password !== confirm) return { error: "Passwords do not match." };
 
-  const vendor = await joinVendor({ name, contactEmail, phone, city });
-  setVendorSession(vendor.id);
+  const result = await registerVendor({
+    name,
+    email: contactEmail,
+    password,
+  });
+  if (result.error) return { error: result.error };
+  redirect("/vendors/dashboard");
+}
+
+export async function signInVendorAction(
+  _prev: JoinState,
+  formData: FormData
+): Promise<JoinState> {
+  const email = String(formData.get("contactEmail") ?? "").trim();
+  const password = String(formData.get("password") ?? "");
+
+  const result = await signIn({ email, password });
+  if (result.error) return { error: result.error };
+  if (!result.user?.vendorId) {
+    return {
+      error: "This account is not a supplier account. Use the buyer sign-in instead.",
+    };
+  }
   redirect("/vendors/dashboard");
 }
 
 export async function signOutVendorAction(): Promise<void> {
-  clearVendorSession();
+  await destroySession();
   redirect("/vendors");
 }
 
@@ -95,7 +110,7 @@ export async function createListingAction(
   _prev: ListingState,
   formData: FormData
 ): Promise<ListingState> {
-  const vendorId = getVendorSessionId();
+  const vendorId = await getVendorSessionId();
   if (!vendorId) redirect("/vendors/join");
 
   const parsed = parseListing(formData);
@@ -109,7 +124,7 @@ export async function updateListingAction(
   _prev: ListingState,
   formData: FormData
 ): Promise<ListingState> {
-  const vendorId = getVendorSessionId();
+  const vendorId = await getVendorSessionId();
   if (!vendorId) redirect("/vendors/join");
 
   const id = String(formData.get("id") ?? "");
@@ -123,7 +138,7 @@ export async function updateListingAction(
 }
 
 export async function toggleListingStatusAction(formData: FormData): Promise<void> {
-  const vendorId = getVendorSessionId();
+  const vendorId = await getVendorSessionId();
   if (!vendorId) redirect("/vendors/join");
   const id = String(formData.get("id") ?? "");
   const next = String(formData.get("next") ?? "published");
@@ -132,7 +147,7 @@ export async function toggleListingStatusAction(formData: FormData): Promise<voi
 }
 
 export async function deleteListingAction(formData: FormData): Promise<void> {
-  const vendorId = getVendorSessionId();
+  const vendorId = await getVendorSessionId();
   if (!vendorId) redirect("/vendors/join");
   const id = String(formData.get("id") ?? "");
   if (id) await deleteListing(id, vendorId);
@@ -140,7 +155,7 @@ export async function deleteListingAction(formData: FormData): Promise<void> {
 }
 
 export async function respondEnquiryAction(formData: FormData): Promise<void> {
-  const vendorId = getVendorSessionId();
+  const vendorId = await getVendorSessionId();
   if (!vendorId) redirect("/vendors/join");
   const id = String(formData.get("id") ?? "");
   const status = String(formData.get("status") ?? "");
@@ -158,7 +173,7 @@ export async function addBlackoutAction(
   _prev: BlackoutState,
   formData: FormData
 ): Promise<BlackoutState> {
-  const vendorId = getVendorSessionId();
+  const vendorId = await getVendorSessionId();
   if (!vendorId) redirect("/vendors/join");
 
   const supplierId = String(formData.get("supplierId") ?? "");
@@ -173,7 +188,7 @@ export async function addBlackoutAction(
 }
 
 export async function removeBlackoutAction(formData: FormData): Promise<void> {
-  const vendorId = getVendorSessionId();
+  const vendorId = await getVendorSessionId();
   if (!vendorId) redirect("/vendors/join");
 
   const id = String(formData.get("id") ?? "");

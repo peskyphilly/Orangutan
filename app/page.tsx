@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { gbp } from "@/lib/format";
+import { getCurrentUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -69,6 +70,7 @@ function TeamPreview() {
 
 export default async function LandingPage() {
   const supplierCount = await prisma.supplier.count();
+  const user = await getCurrentUser();
 
   const stats = [
     { value: String(supplierCount), label: "suppliers ready to match" },
@@ -81,12 +83,29 @@ export default async function LandingPage() {
       <div className="gold-glow">
         <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
           <span className="font-display text-lg tracking-tightest">EventOS</span>
-          <Link
-            href="/vendors"
-            className="font-mono text-[11px] uppercase tracking-[0.18em] text-dim transition-colors hover:text-white"
-          >
-            For suppliers →
-          </Link>
+          <nav className="flex items-center gap-5 font-mono text-[11px] uppercase tracking-[0.18em] text-dim">
+            {user ? (
+              <Link
+                href={user.vendorId ? "/vendors/dashboard" : "/account"}
+                className="transition-colors hover:text-white"
+              >
+                {user.vendorId ? "Dashboard" : "Account"}
+              </Link>
+            ) : (
+              <Link
+                href="/account/signin"
+                className="transition-colors hover:text-white"
+              >
+                Sign in
+              </Link>
+            )}
+            <Link
+              href="/vendors"
+              className="transition-colors hover:text-white"
+            >
+              For suppliers →
+            </Link>
+          </nav>
         </header>
 
         <section className="mx-auto max-w-6xl px-6 pb-24 pt-16 md:pt-24">

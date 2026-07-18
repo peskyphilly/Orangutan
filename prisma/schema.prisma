@@ -7,39 +7,18 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ── Accounts & auth (Auth.js / NextAuth Prisma adapter) ─────────────────────
+// ── Accounts & password sessions ────────────────────────────────────────────
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  role          String    @default("BUYER") // BUYER | VENDOR | ADMIN
-  createdAt     DateTime  @default(now())
+  id           String   @id @default(cuid())
+  name         String?
+  email        String   @unique
+  passwordHash String? // required for new accounts; null only for pre-password legacy rows
+  role         String   @default("BUYER") // BUYER | VENDOR | ADMIN
+  createdAt    DateTime @default(now())
 
-  accounts     Account[]
   sessions     Session[]
   vendor       Vendor?
   compositions Composition[]
-}
-
-model Account {
-  id                String  @id @default(cuid())
-  userId            String
-  type              String
-  provider          String
-  providerAccountId String
-  refresh_token     String?
-  access_token      String?
-  expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String?
-  session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([provider, providerAccountId])
 }
 
 model Session {
@@ -49,14 +28,6 @@ model Session {
   expires      DateTime
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model VerificationToken {
-  identifier String
-  token      String   @unique
-  expires    DateTime
-
-  @@unique([identifier, token])
 }
 
 // ── Vendors & their listings ────────────────────────────────────────────────
@@ -134,9 +105,9 @@ model Composition {
   createdAt DateTime @default(now())
   brief     String // the submitted brief, JSON-serialised (SQLite has no Json type)
   teams     String // the solved teams, JSON-serialised
-  reference String? // set on confirmation, e.g. EV-48213
-  status    String   @default("composed") // composed | confirmed
+  reference String? @unique // set on confirmation, e.g. EV-48213
+  status    String  @default("composed") // composed | confirmed
 
-  userId String? // the buyer, once accounts exist
+  userId String? // the buyer who owns this composition
   user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
 }

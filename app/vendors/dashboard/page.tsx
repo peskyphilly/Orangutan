@@ -24,10 +24,10 @@ function priceLabel(l: {
 }
 
 export default async function VendorDashboard() {
-  const vendorId = getVendorSessionId();
-  if (!vendorId) redirect("/vendors/join");
+  const vendorId = await getVendorSessionId();
+  if (!vendorId) redirect("/vendors/signin");
   const vendor = await getVendor(vendorId);
-  if (!vendor) redirect("/vendors/join");
+  if (!vendor) redirect("/vendors/signin");
 
   const listings = await listListings(vendorId);
   const published = listings.filter((l) => l.status === "published").length;

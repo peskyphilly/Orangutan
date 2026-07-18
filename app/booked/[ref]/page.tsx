@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { getCompositionByReference } from "@/lib/composition";
 import { gbp, prettyDate } from "@/lib/format";
+import { getCurrentUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +14,14 @@ export default async function BookedPage({
   const reference = decodeURIComponent(params.ref);
   const composition = await getCompositionByReference(reference);
   if (!composition) notFound();
+
+  const user = await getCurrentUser();
+  if (!user) {
+    redirect(`/account/signin?next=${encodeURIComponent(`/booked/${reference}`)}`);
+  }
+  if (composition.userId && composition.userId !== user.id) {
+    notFound();
+  }
 
   const { brief } = composition;
   const team =

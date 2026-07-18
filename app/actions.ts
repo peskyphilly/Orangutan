@@ -2,7 +2,12 @@
 
 import { redirect } from "next/navigation";
 import { Brief } from "@/lib/solver";
-import { confirmComposition, createComposition } from "@/lib/composition";
+import {
+  ConfirmConflictError,
+  confirmComposition,
+  createComposition,
+} from "@/lib/composition";
+import { getCurrentUser } from "@/lib/auth";
 
 export interface ComposeState {
   error?: string;
@@ -22,7 +27,6 @@ export async function composeAction(
   const kitchen = formData.get("kitchen") === "on";
   const rigging = formData.get("rigging") === "on";
 
-  // Server-side validation: date + guests + budget ≥ £5,000.
   if (!occasion) return { error: "Choose an occasion." };
   if (!date || Number.isNaN(Date.parse(date)))
     return { error: "Choose a date." };
@@ -47,14 +51,34 @@ export async function composeAction(
     rigging,
   };
 
-  const id = await createComposition(brief);
+  const user = await getCurrentUser();
+  const id = await createComposition(brief, user?.id ?? null);
   redirect(`/composing/${id}`);
 }
 
-export async function confirmAction(formData: FormData): Promise<void> {
+export interface ConfirmState {
+  error?: string;
+}
+
+export async function confirmAction(
+  _prev: ConfirmState,
+  formData: FormData
+): Promise<ConfirmState> {
   const id = String(formData.get("compositionId") ?? "");
   const teamId = String(formData.get("teamId") ?? "");
-  if (!id || !teamId) throw new Error("Missing composition or team.");
-  const reference = await confirmComposition(id, teamId);
-  redirect(`/booked/${reference}`);
+  if (!id || !teamId) return { error: "Missing composition or team." };
+
+  const user = await getCurrentUser();
+  if (!user) {
+    const next = encodeURIComponent(`/teams/${encodeURIComponent(teamId)}?c=${id}`);
+    redirect(`/account/signin?next=${next}`);
+  }
+
+  try {
+    const reference = await confirmComposition(id, teamId, user.id);
+    redirect(`/booked/${reference}`);
+  } catch (err) {
+    if (err instanceof ConfirmConflictError) return { error: err.message };
+    throw err;
+  }
 }

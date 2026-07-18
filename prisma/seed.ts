@@ -4,32 +4,38 @@ import { SUPPLIERS } from "../lib/dataset";
 const prisma = new PrismaClient();
 
 async function main() {
-  // Only reset the seeded demo suppliers — never touch vendor-created listings,
-  // which have a vendorId and must survive redeploys/reseeds.
-  await prisma.supplier.deleteMany({ where: { vendorId: null } });
+  // Non-destructive: upsert seeded demo suppliers only. Never delete rows, so
+  // blackouts and booking history on those ids survive redeploys. Vendor-created
+  // listings (vendorId set) are left completely alone.
   for (const s of SUPPLIERS) {
-    await prisma.supplier.create({
-      data: {
-        id: s.id,
-        name: s.name,
-        category: s.category,
-        price: s.price ?? null,
-        perHead: s.perHead ?? null,
-        capacity: s.capacity ?? null,
-        kitchen: s.kitchen ?? null,
-        rigging: s.rigging ?? null,
-        stepFree: s.stepFree ?? null,
-        halal: s.halal ?? null,
-        needsKitchen: s.needsKitchen ?? null,
-        needsRigging: s.needsRigging ?? null,
-        staging: s.staging ?? null,
-        recPct: s.recPct,
-        recEvents: s.recEvents,
-      },
+    const data = {
+      name: s.name,
+      category: s.category,
+      price: s.price ?? null,
+      perHead: s.perHead ?? null,
+      capacity: s.capacity ?? null,
+      kitchen: s.kitchen ?? null,
+      rigging: s.rigging ?? null,
+      stepFree: s.stepFree ?? null,
+      halal: s.halal ?? null,
+      needsKitchen: s.needsKitchen ?? null,
+      needsRigging: s.needsRigging ?? null,
+      staging: s.staging ?? null,
+      recPct: s.recPct,
+      recEvents: s.recEvents,
+      status: "published",
+      vendorId: null,
+    };
+
+    await prisma.supplier.upsert({
+      where: { id: s.id },
+      create: { id: s.id, ...data },
+      update: data,
     });
   }
+
   const count = await prisma.supplier.count();
-  console.log(`Seeded ${count} suppliers.`);
+  console.log(`Seeded/updated ${SUPPLIERS.length} demo suppliers (${count} total).`);
 }
 
 main()

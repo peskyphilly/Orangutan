@@ -1,8 +1,7 @@
 // Production schema — identical models to schema.prisma, but on PostgreSQL for a
 // hosted deploy (Vercel serverless can't persist a SQLite file). Local dev and
 // the test suite keep using the SQLite schema.prisma; only the Vercel build
-// (`npm run build:vercel`) points Prisma at this file. The generated client is
-// the same either way, so no application code changes between the two.
+// (`npm run build:vercel`) points Prisma at this file.
 
 generator client {
   provider = "prisma-client-js"
@@ -14,37 +13,16 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  role          String    @default("BUYER")
-  createdAt     DateTime  @default(now())
+  id           String   @id @default(cuid())
+  name         String?
+  email        String   @unique
+  passwordHash String?
+  role         String   @default("BUYER")
+  createdAt    DateTime @default(now())
 
-  accounts     Account[]
   sessions     Session[]
   vendor       Vendor?
   compositions Composition[]
-}
-
-model Account {
-  id                String  @id @default(cuid())
-  userId            String
-  type              String
-  provider          String
-  providerAccountId String
-  refresh_token     String?
-  access_token      String?
-  expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String?
-  session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([provider, providerAccountId])
 }
 
 model Session {
@@ -54,14 +32,6 @@ model Session {
   expires      DateTime
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model VerificationToken {
-  identifier String
-  token      String   @unique
-  expires    DateTime
-
-  @@unique([identifier, token])
 }
 
 model Vendor {
@@ -134,7 +104,7 @@ model Composition {
   createdAt DateTime @default(now())
   brief     String
   teams     String
-  reference String?
+  reference String?  @unique
   status    String   @default("composed")
 
   userId String?

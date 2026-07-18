@@ -5,7 +5,7 @@ import { getVendor } from "@/lib/vendors";
 export const dynamic = "force-dynamic";
 
 export default async function VendorLanding() {
-  const vendorId = getVendorSessionId();
+  const vendorId = await getVendorSessionId();
   const vendor = vendorId ? await getVendor(vendorId) : null;
 
   const points = [
@@ -37,9 +37,14 @@ export default async function VendorLanding() {
                 Dashboard
               </Link>
             ) : (
-              <Link href="/vendors/join" className="hover:text-white">
-                Join
-              </Link>
+              <>
+                <Link href="/vendors/signin" className="hover:text-white">
+                  Sign in
+                </Link>
+                <Link href="/vendors/join" className="hover:text-white">
+                  Join
+                </Link>
+              </>
             )}
           </nav>
         </header>

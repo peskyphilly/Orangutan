@@ -13,8 +13,8 @@ export default async function EditListingPage({
 }: {
   params: { id: string };
 }) {
-  const vendorId = getVendorSessionId();
-  if (!vendorId) redirect("/vendors/join");
+  const vendorId = await getVendorSessionId();
+  if (!vendorId) redirect("/vendors/signin");
 
   const listing = await getListing(params.id, vendorId);
   if (!listing) notFound();

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useFormState, useFormStatus } from "react-dom";
-import { JoinState, joinVendorAction } from "../actions";
+import { JoinState, signInVendorAction } from "../actions";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -12,7 +12,7 @@ function SubmitButton() {
       disabled={pending}
       className="inline-flex items-center gap-3 bg-ink px-7 py-3.5 font-medium text-white transition-transform hover:-translate-y-1 focus-visible:-translate-y-1 disabled:opacity-60"
     >
-      {pending ? "Creating account" : "Create supplier account"}
+      {pending ? "Signing in" : "Sign in"}
       <span aria-hidden className="font-mono">
         →
       </span>
@@ -20,8 +20,8 @@ function SubmitButton() {
   );
 }
 
-export default function VendorJoinPage() {
-  const [state, formAction] = useFormState(joinVendorAction, {} as JoinState);
+export default function VendorSignInPage() {
+  const [state, formAction] = useFormState(signInVendorAction, {} as JoinState);
 
   return (
     <main className="min-h-screen bg-white text-ink">
@@ -30,49 +30,35 @@ export default function VendorJoinPage() {
           EventOS
         </Link>
         <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-grey">
-          Supplier sign-up
+          Supplier sign-in
         </span>
       </header>
 
       <section className="mx-auto max-w-2xl px-6 pb-24 pt-8">
-        <p className="animate-fade-up font-mono text-[11px] uppercase tracking-[0.2em] text-gold">
-          List your services
+        <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-gold">
+          Welcome back
         </p>
-        <h1 className="mt-4 animate-fade-up text-4xl tracking-tight md:text-5xl">
-          Create a supplier account
+        <h1 className="mt-4 text-4xl tracking-tight md:text-5xl">
+          Sign in to your supplier account
         </h1>
-        <p className="mt-4 max-w-xl animate-fade-up font-light leading-relaxed text-grey">
-          Business name, email and a password. That is all you need to list and
-          receive enquiries.
+        <p className="mt-4 max-w-xl font-light leading-relaxed text-grey">
+          Use the email and password you set when you listed your services.
         </p>
 
         <form action={formAction} className="mt-10 space-y-6">
-          <div>
-            <label htmlFor="name" className="block text-sm font-medium text-ink">
-              Business name
-            </label>
-            <input
-              id="name"
-              name="name"
-              required
-              placeholder="e.g. Maison Verte"
-              className="mt-3 w-full border border-light-line bg-white px-4 py-3 text-ink focus:border-gold"
-            />
-          </div>
-
           <div>
             <label
               htmlFor="contactEmail"
               className="block text-sm font-medium text-ink"
             >
-              Contact email
+              Email
             </label>
             <input
               id="contactEmail"
               name="contactEmail"
               type="email"
               required
-              placeholder="you@business.com"
+              autoComplete="email"
               className="mt-3 w-full border border-light-line bg-white px-4 py-3 text-ink focus:border-gold"
             />
           </div>
@@ -89,29 +75,7 @@ export default function VendorJoinPage() {
               name="password"
               type="password"
               required
-              minLength={8}
-              autoComplete="new-password"
-              className="mt-3 w-full border border-light-line bg-white px-4 py-3 text-ink focus:border-gold"
-            />
-            <p className="mt-2 text-xs font-light text-grey">
-              At least 8 characters.
-            </p>
-          </div>
-
-          <div>
-            <label
-              htmlFor="confirmPassword"
-              className="block text-sm font-medium text-ink"
-            >
-              Confirm password
-            </label>
-            <input
-              id="confirmPassword"
-              name="confirmPassword"
-              type="password"
-              required
-              minLength={8}
-              autoComplete="new-password"
+              autoComplete="current-password"
               className="mt-3 w-full border border-light-line bg-white px-4 py-3 text-ink focus:border-gold"
             />
           </div>
@@ -125,10 +89,10 @@ export default function VendorJoinPage() {
           <div className="flex flex-wrap items-center gap-6 border-t hairline-light pt-8">
             <SubmitButton />
             <Link
-              href="/vendors/signin"
+              href="/vendors/join"
               className="text-sm font-light text-grey underline-offset-4 hover:underline"
             >
-              Already have an account? Sign in
+              New here? Create an account
             </Link>
           </div>
         </form>

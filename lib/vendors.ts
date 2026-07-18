@@ -35,49 +35,6 @@ export async function getVendor(id: string): Promise<VendorRecord | null> {
   return prisma.vendor.findUnique({ where: { id } });
 }
 
-// Join, or resume an existing vendor if the email is already registered.
-export async function joinVendor(input: {
-  name: string;
-  contactEmail: string;
-  phone?: string;
-  city?: string;
-}): Promise<VendorRecord> {
-  const email = input.contactEmail.trim().toLowerCase();
-
-  const existingUser = await prisma.user.findUnique({
-    where: { email },
-    include: { vendor: true },
-  });
-  if (existingUser?.vendor) return existingUser.vendor;
-
-  const user =
-    existingUser ??
-    (await prisma.user.create({ data: { email, role: "VENDOR" } }));
-  if (user.role !== "VENDOR") {
-    await prisma.user.update({ where: { id: user.id }, data: { role: "VENDOR" } });
-  }
-
-  return prisma.vendor.create({
-    data: {
-      userId: user.id,
-      name: input.name.trim(),
-      contactEmail: email,
-      phone: input.phone?.trim() || null,
-      city: input.city?.trim() || null,
-    },
-  });
-}
-
-export async function findVendorByEmail(
-  email: string
-): Promise<VendorRecord | null> {
-  const user = await prisma.user.findUnique({
-    where: { email: email.trim().toLowerCase() },
-    include: { vendor: true },
-  });
-  return user?.vendor ?? null;
-}
-
 export interface EnquiryRecord {
   id: string;
   reference: string;

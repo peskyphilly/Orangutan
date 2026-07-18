@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import { getComposition } from "@/lib/composition";
 import { gbp, prettyDate, recordStamp } from "@/lib/format";
 import { Brief, Team } from "@/lib/solver";
-import { confirmAction } from "@/app/actions";
+import { getCurrentUser } from "@/lib/auth";
+import { ConfirmTeamButton } from "@/components/ConfirmTeamButton";
 
 export const dynamic = "force-dynamic";
 
@@ -93,6 +94,11 @@ export default async function TeamDetailPage({
   const teamId = decodeURIComponent(params.id);
   const team = composition.teams.list.find((t) => t.id === teamId);
   if (!team) notFound();
+
+  const user = await getCurrentUser();
+  const signInHref = `/account/signin?next=${encodeURIComponent(
+    `/teams/${encodeURIComponent(team.id)}?c=${compositionId}`
+  )}`;
 
   const { brief } = composition;
   const ties = resolvedTies(team, brief);
@@ -189,22 +195,15 @@ export default async function TeamDetailPage({
       <section className="border-t hairline-dark">
         <div className="mx-auto flex max-w-5xl flex-col gap-4 px-6 py-10 sm:flex-row sm:items-center sm:justify-between">
           <p className="max-w-md font-light text-dim">
-            Confirming issues the mock contracts and records the audit trail. No
-            payment is taken in this MVP.
+            Confirming locks these suppliers on your date and notifies any
+            vendor-owned listings. No payment is taken in this MVP.
           </p>
-          <form action={confirmAction}>
-            <input type="hidden" name="compositionId" value={compositionId} />
-            <input type="hidden" name="teamId" value={team.id} />
-            <button
-              type="submit"
-              className="inline-flex items-center gap-3 bg-gold px-7 py-3.5 font-medium text-black transition-transform hover:-translate-y-1 focus-visible:-translate-y-1"
-            >
-              Confirm this team
-              <span aria-hidden className="font-mono">
-                →
-              </span>
-            </button>
-          </form>
+          <ConfirmTeamButton
+            compositionId={compositionId}
+            teamId={team.id}
+            loggedIn={Boolean(user)}
+            signInHref={signInHref}
+          />
         </div>
       </section>
     </main>

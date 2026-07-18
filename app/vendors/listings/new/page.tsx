@@ -6,8 +6,9 @@ import { createListingAction } from "../../actions";
 
 export const dynamic = "force-dynamic";
 
-export default function NewListingPage() {
-  if (!getVendorSessionId()) redirect("/vendors/join");
+export default async function NewListingPage() {
+  const vendorId = await getVendorSessionId();
+  if (!vendorId) redirect("/vendors/signin");
 
   return (
     <main className="min-h-screen bg-white text-ink">

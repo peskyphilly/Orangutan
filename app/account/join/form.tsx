@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useFormState, useFormStatus } from "react-dom";
-import { JoinState, joinVendorAction } from "../actions";
+import { AuthFormState, joinBuyerAction } from "../actions";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -12,7 +13,7 @@ function SubmitButton() {
       disabled={pending}
       className="inline-flex items-center gap-3 bg-ink px-7 py-3.5 font-medium text-white transition-transform hover:-translate-y-1 focus-visible:-translate-y-1 disabled:opacity-60"
     >
-      {pending ? "Creating account" : "Create supplier account"}
+      {pending ? "Creating account" : "Create account"}
       <span aria-hidden className="font-mono">
         →
       </span>
@@ -20,59 +21,60 @@ function SubmitButton() {
   );
 }
 
-export default function VendorJoinPage() {
-  const [state, formAction] = useFormState(joinVendorAction, {} as JoinState);
+export default function BuyerJoinForm() {
+  const searchParams = useSearchParams();
+  const next = searchParams.get("next") ?? "/account";
+  const [state, formAction] = useFormState(joinBuyerAction, {} as AuthFormState);
 
   return (
     <main className="min-h-screen bg-white text-ink">
       <header className="mx-auto flex max-w-2xl items-center justify-between px-6 py-6">
-        <Link href="/vendors" className="font-display text-lg tracking-tight">
+        <Link href="/" className="font-display text-lg tracking-tight">
           EventOS
         </Link>
         <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-grey">
-          Supplier sign-up
+          Buyer account
         </span>
       </header>
 
       <section className="mx-auto max-w-2xl px-6 pb-24 pt-8">
-        <p className="animate-fade-up font-mono text-[11px] uppercase tracking-[0.2em] text-gold">
-          List your services
+        <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-gold">
+          Plan with an account
         </p>
-        <h1 className="mt-4 animate-fade-up text-4xl tracking-tight md:text-5xl">
-          Create a supplier account
+        <h1 className="mt-4 text-4xl tracking-tight md:text-5xl">
+          Create a buyer account
         </h1>
-        <p className="mt-4 max-w-xl animate-fade-up font-light leading-relaxed text-grey">
-          Business name, email and a password. That is all you need to list and
-          receive enquiries.
+        <p className="mt-4 max-w-xl font-light leading-relaxed text-grey">
+          Save your compositions and confirm teams securely. Email and password
+          only.
         </p>
 
         <form action={formAction} className="mt-10 space-y-6">
+          <input type="hidden" name="next" value={next} />
+
           <div>
             <label htmlFor="name" className="block text-sm font-medium text-ink">
-              Business name
+              Name
             </label>
             <input
               id="name"
               name="name"
               required
-              placeholder="e.g. Maison Verte"
+              autoComplete="name"
               className="mt-3 w-full border border-light-line bg-white px-4 py-3 text-ink focus:border-gold"
             />
           </div>
 
           <div>
-            <label
-              htmlFor="contactEmail"
-              className="block text-sm font-medium text-ink"
-            >
-              Contact email
+            <label htmlFor="email" className="block text-sm font-medium text-ink">
+              Email
             </label>
             <input
-              id="contactEmail"
-              name="contactEmail"
+              id="email"
+              name="email"
               type="email"
               required
-              placeholder="you@business.com"
+              autoComplete="email"
               className="mt-3 w-full border border-light-line bg-white px-4 py-3 text-ink focus:border-gold"
             />
           </div>
@@ -125,7 +127,7 @@ export default function VendorJoinPage() {
           <div className="flex flex-wrap items-center gap-6 border-t hairline-light pt-8">
             <SubmitButton />
             <Link
-              href="/vendors/signin"
+              href={`/account/signin?next=${encodeURIComponent(next)}`}
               className="text-sm font-light text-grey underline-offset-4 hover:underline"
             >
               Already have an account? Sign in

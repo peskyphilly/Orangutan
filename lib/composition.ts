@@ -11,6 +11,13 @@ export interface StoredTeams {
   selectedTeamId?: string;
 }
 
+export class ConfirmConflictError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ConfirmConflictError";
+  }
+}
+
 type SupplierRow = {
   id: string;
   vendorId: string | null;
@@ -23,7 +30,10 @@ async function loadPublishedSuppliers(): Promise<SupplierRow[]> {
   return rows as unknown as SupplierRow[];
 }
 
-export async function createComposition(brief: Brief): Promise<string> {
+export async function createComposition(
+  brief: Brief,
+  userId?: string | null
+): Promise<string> {
   const rows = await loadPublishedSuppliers();
   const blackouts = await prisma.blackout.findMany({
     where: {
@@ -41,6 +51,7 @@ export async function createComposition(brief: Brief): Promise<string> {
     data: {
       brief: JSON.stringify(brief),
       teams: JSON.stringify(stored),
+      userId: userId ?? null,
     },
   });
   return composition.id;
@@ -52,6 +63,7 @@ export interface LoadedComposition {
   teams: StoredTeams;
   reference: string | null;
   status: string;
+  userId: string | null;
 }
 
 export async function getComposition(
@@ -65,13 +77,14 @@ export async function getComposition(
     teams: JSON.parse(c.teams) as StoredTeams,
     reference: c.reference,
     status: c.status,
+    userId: c.userId,
   };
 }
 
 export async function getCompositionByReference(
   reference: string
 ): Promise<LoadedComposition | null> {
-  const c = await prisma.composition.findFirst({ where: { reference } });
+  const c = await prisma.composition.findUnique({ where: { reference } });
   if (!c) return null;
   return {
     id: c.id,
@@ -79,102 +92,140 @@ export async function getCompositionByReference(
     teams: JSON.parse(c.teams) as StoredTeams,
     reference: c.reference,
     status: c.status,
+    userId: c.userId,
   };
 }
 
+export async function listCompositionsForUser(
+  userId: string
+): Promise<LoadedComposition[]> {
+  const rows = await prisma.composition.findMany({
+    where: { userId },
+    orderBy: { createdAt: "desc" },
+  });
+  return rows.map((c) => ({
+    id: c.id,
+    brief: JSON.parse(c.brief) as Brief,
+    teams: JSON.parse(c.teams) as StoredTeams,
+    reference: c.reference,
+    status: c.status,
+    userId: c.userId,
+  }));
+}
+
 function makeReference(): string {
-  // EV-48213 style: five digits, deterministic-enough for a mock ops record.
   const n = 10000 + Math.floor(Math.random() * 89999);
   return `EV-${n}`;
 }
 
 export async function confirmComposition(
   id: string,
-  teamId: string
+  teamId: string,
+  buyerUserId: string
 ): Promise<string> {
   const existing = await getComposition(id);
   if (!existing) throw new Error("composition not found");
-  if (existing.reference) return existing.reference; // idempotent
-
-  const reference = makeReference();
-  const stored: StoredTeams = { ...existing.teams, selectedTeamId: teamId };
-  await prisma.composition.update({
-    where: { id },
-    data: {
-      reference,
-      status: "confirmed",
-      teams: JSON.stringify(stored),
-    },
-  });
-
-  await createEnquiriesForTeam(
-    id,
-    reference,
-    existing.brief,
-    existing.teams,
-    teamId
-  );
-  await blackoutConfirmedTeam(existing.brief.date, existing.teams, teamId);
-  return reference;
-}
-
-// For every member of the confirmed team that is a vendor-owned listing, record
-// an enquiry so the vendor sees the booking land in their dashboard. Seeded demo
-// suppliers have no vendor, so they generate nothing.
-async function createEnquiriesForTeam(
-  compositionId: string,
-  reference: string,
-  brief: Brief,
-  teams: StoredTeams,
-  teamId: string
-) {
-  const team = teams.list.find((t) => t.id === teamId);
-  if (!team) return;
-
-  const suppliers = await prisma.supplier.findMany({
-    where: {
-      id: { in: team.rows.map((r) => r.supplierId) },
-      vendorId: { not: null },
-    },
-    select: { id: true, vendorId: true },
-  });
-  const vendorBySupplier = new Map(suppliers.map((s) => [s.id, s.vendorId!]));
-
-  const enquiries = team.rows
-    .filter((r) => vendorBySupplier.has(r.supplierId))
-    .map((r) => ({
-      compositionId,
-      reference,
-      vendorId: vendorBySupplier.get(r.supplierId)!,
-      supplierId: r.supplierId,
-      listingName: r.name,
-      role: r.role,
-      occasion: brief.occasion,
-      eventDate: brief.date,
-      guests: brief.guests,
-      amount: r.price,
-    }));
-
-  if (enquiries.length > 0) {
-    await prisma.enquiry.createMany({ data: enquiries });
+  if (existing.reference) {
+    if (existing.userId && existing.userId !== buyerUserId) {
+      throw new ConfirmConflictError("This booking belongs to another account.");
+    }
+    return existing.reference;
   }
-}
 
-// Block the confirmed date for every supplier on the chosen team so they cannot
-// be composed again for that day.
-async function blackoutConfirmedTeam(
-  date: string,
-  teams: StoredTeams,
-  teamId: string
-) {
-  const team = teams.list.find((t) => t.id === teamId);
-  if (!team) return;
+  if (existing.userId && existing.userId !== buyerUserId) {
+    throw new ConfirmConflictError("This composition belongs to another account.");
+  }
 
-  await prisma.blackout.createMany({
-    data: team.rows.map((r) => ({
-      supplierId: r.supplierId,
-      date,
-    })),
-    skipDuplicates: true,
-  });
+  const team = existing.teams.list.find((t) => t.id === teamId);
+  if (!team) throw new ConfirmConflictError("That team is no longer available.");
+
+  const supplierIds = team.rows.map((r) => r.supplierId);
+  const date = existing.brief.date;
+
+  try {
+    return await prisma.$transaction(async (tx) => {
+      // Re-check availability under the transaction so two confirms cannot both win.
+      const blocked = await tx.blackout.findMany({
+        where: { date, supplierId: { in: supplierIds } },
+        select: { supplierId: true },
+      });
+      if (blocked.length > 0) {
+        throw new ConfirmConflictError(
+          "One or more suppliers on this team are no longer free on your date. Compose again."
+        );
+      }
+
+      // Unique (supplierId, date) is the lock. A concurrent confirm fails here.
+      await tx.blackout.createMany({
+        data: supplierIds.map((supplierId) => ({ supplierId, date })),
+      });
+
+      let reference = makeReference();
+      for (let attempt = 0; attempt < 5; attempt++) {
+        const clash = await tx.composition.findUnique({ where: { reference } });
+        if (!clash) break;
+        reference = makeReference();
+      }
+
+      const stored: StoredTeams = {
+        ...existing.teams,
+        selectedTeamId: teamId,
+      };
+
+      const updated = await tx.composition.updateMany({
+        where: { id, status: "composed" },
+        data: {
+          reference,
+          status: "confirmed",
+          teams: JSON.stringify(stored),
+          userId: buyerUserId,
+        },
+      });
+      if (updated.count === 0) {
+        throw new ConfirmConflictError(
+          "This composition was already confirmed. Refresh to see the booking."
+        );
+      }
+
+      const vendors = await tx.supplier.findMany({
+        where: { id: { in: supplierIds }, vendorId: { not: null } },
+        select: { id: true, vendorId: true },
+      });
+      const vendorBySupplier = new Map(vendors.map((s) => [s.id, s.vendorId!]));
+
+      const enquiries = team.rows
+        .filter((r) => vendorBySupplier.has(r.supplierId))
+        .map((r) => ({
+          compositionId: id,
+          reference,
+          vendorId: vendorBySupplier.get(r.supplierId)!,
+          supplierId: r.supplierId,
+          listingName: r.name,
+          role: r.role,
+          occasion: existing.brief.occasion,
+          eventDate: existing.brief.date,
+          guests: existing.brief.guests,
+          amount: r.price,
+        }));
+
+      if (enquiries.length > 0) {
+        await tx.enquiry.createMany({ data: enquiries });
+      }
+
+      return reference;
+    });
+  } catch (err) {
+    if (err instanceof ConfirmConflictError) throw err;
+    // Unique constraint race on blackouts
+    const message = err instanceof Error ? err.message : "";
+    if (
+      message.includes("Unique constraint") ||
+      message.includes("UNIQUE constraint")
+    ) {
+      throw new ConfirmConflictError(
+        "One or more suppliers on this team were just booked. Compose again."
+      );
+    }
+    throw err;
+  }
 }
