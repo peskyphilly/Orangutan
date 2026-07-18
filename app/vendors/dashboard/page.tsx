@@ -5,12 +5,6 @@ import { getVendor, listEnquiries, listListings } from "@/lib/vendors";
 import { CATEGORY_LABEL } from "@/lib/listing-fields";
 import { gbp, prettyDate } from "@/lib/format";
 import {
-  DEFAULT_BUYER_BRIEF,
-  explainListingFit,
-} from "@/lib/listing-fit";
-import { flagOn } from "@/lib/flags";
-import { prisma } from "@/lib/db";
-import {
   deleteListingAction,
   respondEnquiryAction,
   signOutVendorAction,
@@ -39,19 +33,6 @@ export default async function VendorDashboard() {
   const published = listings.filter((l) => l.status === "published").length;
   const enquiries = await listEnquiries(vendorId);
   const newEnquiries = enquiries.filter((e) => e.status === "new").length;
-
-  const briefDate = DEFAULT_BUYER_BRIEF.date;
-  const blackoutsOnBriefDate =
-    listings.length === 0
-      ? []
-      : await prisma.blackout.findMany({
-          where: {
-            date: briefDate,
-            supplierId: { in: listings.map((l) => l.id) },
-          },
-          select: { supplierId: true },
-        });
-  const blackedOut = new Set(blackoutsOnBriefDate.map((b) => b.supplierId));
 
   return (
     <main className="min-h-screen bg-white text-ink">
@@ -177,9 +158,6 @@ export default async function VendorDashboard() {
           <ul className="mt-12 divide-y divide-[#E6E3DB] border-y hairline-light">
             {listings.map((l) => {
               const isPublished = l.status === "published";
-              const fit = explainListingFit(l, DEFAULT_BUYER_BRIEF, {
-                blackedOutOnBriefDate: blackedOut.has(l.id),
-              });
               return (
                 <li
                   key={l.id}
@@ -201,29 +179,7 @@ export default async function VendorDashboard() {
                       {l.recEvents > 0
                         ? `${l.recPct}% delivered as agreed · ${l.recEvents} verified events`
                         : "New, no record yet"}
-                      {isPublished && l.category === "CATERER"
-                        ? ` · Halal ${flagOn(l.halal) ? "on" : "off"}`
-                        : ""}
                     </p>
-                    {isPublished ? (
-                      <p
-                        className={`mt-2 text-sm ${
-                          fit.ok ? "text-grey" : "text-ink"
-                        }`}
-                      >
-                        {fit.ok
-                          ? `Eligible for the default buyer brief (${prettyDate(briefDate)}).`
-                          : `Not eligible for the default buyer brief: ${fit.reasons.join(" ")}`}{" "}
-                        {!fit.ok ? (
-                          <Link
-                            href={`/vendors/listings/${l.id}/edit`}
-                            className="underline underline-offset-4"
-                          >
-                            Edit listing
-                          </Link>
-                        ) : null}
-                      </p>
-                    ) : null}
                   </div>
 
                   <div className="flex items-center gap-4 font-mono text-[11px] uppercase tracking-[0.14em]">

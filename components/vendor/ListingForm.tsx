@@ -151,12 +151,6 @@ export function ListingForm({
       {spec.flags.length > 0 ? (
         <fieldset>
           <legend className="text-sm font-medium text-ink">Capabilities</legend>
-          {category === "CATERER" ? (
-            <p className="mt-1 text-xs font-light text-grey">
-              Buyers who require halal catering will only see listings marked
-              Halal-capable. Leave it unticked only if you cannot serve halal.
-            </p>
-          ) : null}
           <div className="mt-4 space-y-3">
             {spec.flags.map((f) => {
               const initialFlag = FLAG_VALUE[f.name]?.(initial);
@@ -194,9 +188,6 @@ export function ListingForm({
         />
         <span className="text-sm text-ink">
           Publish: make this listing available to the composition engine
-          {category === "CATERER"
-            ? ". Match the capabilities buyers tick on their brief, or you will be filtered out."
-            : ""}
         </span>
       </label>
 
