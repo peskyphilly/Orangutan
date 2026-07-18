@@ -162,6 +162,25 @@ describe("capacity filter", () => {
 });
 
 describe("halal filter", () => {
+  it("accepts truthy halal flags from storage quirks", () => {
+    const marketplace: Supplier = {
+      id: "c-lexify",
+      name: "Catering",
+      category: "CATERER",
+      perHead: 70,
+      // SQLite / odd drivers sometimes surface booleans as 1
+      halal: 1 as unknown as boolean,
+      needsKitchen: false,
+      recPct: 0,
+      recEvents: 0,
+      vendorId: "v-lex",
+      vendorName: "Lexify Scale",
+    };
+    const { teams } = solve([...SUPPLIERS, marketplace], DEMO_BRIEF, () => true);
+    expect(teams.length).toBeGreaterThan(0);
+    expect(teams.every((t) => t.members.caterer.id === "c-lexify")).toBe(true);
+  });
+
   it("drops non-halal caterers when halal is required", () => {
     const { suppliers, date } = minimalSet({
       venue: {},

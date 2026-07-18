@@ -7,6 +7,8 @@
 // This module has no I/O and no framework imports so it can be unit-tested in
 // isolation and swapped between a static dataset and a real bookings table.
 
+import { flagOn } from "./flags";
+
 export type Category =
   | "VENUE"
   | "CATERER"
@@ -241,15 +243,15 @@ export function solve(
   const venuesAll = availVenues.filter(
     (v) =>
       (v.capacity ?? 0) >= brief.guests &&
-      (!brief.stepFree || v.stepFree === true) &&
-      (!brief.kitchen || v.kitchen === true) &&
-      (!brief.rigging || v.rigging === true)
+      (!brief.stepFree || flagOn(v.stepFree)) &&
+      (!brief.kitchen || flagOn(v.kitchen)) &&
+      (!brief.rigging || flagOn(v.rigging))
   );
   const caterersAll = availCaterers.filter(
-    (c) => !brief.halal || c.halal === true
+    (c) => !brief.halal || flagOn(c.halal)
   );
   const productionAll = availProduction.filter(
-    (p) => !brief.staging || p.staging === true
+    (p) => !brief.staging || flagOn(p.staging)
   );
   const photographersAll = availPhotographers;
   const floristsAll = availFlorists;
